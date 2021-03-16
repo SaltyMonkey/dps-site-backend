@@ -1,0 +1,11 @@
+{
+	"serverIp": "127.0.0.1",
+	"serverPort": 3000,
+	"secureServer": false,
+	"httpsKeyPath": "",
+	"httpsCertPath": "",
+	"serverMaxParamLength": 100,
+	"serverTrustProxy": false,
+	"dbConnectionString": "mongodb://localhost/dps",
+	"dbPoolSize": 100
+}
