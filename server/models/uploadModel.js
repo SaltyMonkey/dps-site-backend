@@ -22,7 +22,7 @@ const upload = new mongoose.Schema({
 		"default": () => customAlphabet(alphabet, 25),
 		"unique": true
 	},
-	"uploadTime": { "type": String, "default": () => {`${ Date.now()}`;} },
+	"uploadTime": { "type": String, "default": () => { `${Date.now()}`; } },
 	"uploadSoftwareVersion": String,
 	"region": String,
 	"bossId": Number,
@@ -34,7 +34,8 @@ const upload = new mongoose.Schema({
 		"value": Number
 	}],
 	"isShame": Boolean,
-	"uploader": { "type": mongoose.Schema.Types.ObjectId, "ref": "player"},
+	"isP2WConsums": Boolean,
+	"uploader": { "type": mongoose.Schema.Types.ObjectId, "ref": "player" },
 	"members": [
 		{
 			"id": { "type": mongoose.Schema.Types.ObjectId, "ref": "player", "autopopulate": true },
@@ -75,7 +76,42 @@ upload.statics.getLatestRuns = async function (searchParams, amount) {
 	return runs;
 };
 
-upload.statics.getCompleteRun = async function (searchParams) {
-	return await upload.findOne(searchParams).lean();
+upload.statics.getCompleteRun = async function (id) {
+	return await upload.findOne({ id: id }).lean();
 };
+
+upload.statics.getTopRuns = async function (data) {
+	return await upload.aggregate([
+		{
+			"$match": {
+				"region": data.region,
+				"bossId": data.bossId,
+				"areaId": data.areaId,
+				"members.class": data.class,
+				"isP2WConsums": data.excludeP2wConsums
+			}
+		}, {
+			"$project": {
+				"id": 1,
+				"bossId": 1,
+				"areaId": 1,
+				"members.playerDps": 1,
+				"members.name": 1,
+				"members.class": 1
+			}
+		}, {
+			"$unwind": {
+				"path": "$members"
+			}
+		}, {
+			"$match": {
+				"members.class": "gunner"
+			}
+		}
+	])
+		.collation({ locale: "en_US", numericOrdering: true })
+		.sort({ "members.playerDps": -1 })
+		.limit(150);
+};
+
 module.exports = mongoose.model("upload", upload);

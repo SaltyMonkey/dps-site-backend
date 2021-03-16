@@ -41,14 +41,14 @@ async function searchReq(fastify, options) {
 		}
 	};
 
-	const schemaByPlayer = {
+	const schemaByTop = {
 		body: (S.object()
 			.additionalProperties(false)
-			.prop("region", S.enum(regions))
-			.prop("areaId", S.number())
-			.prop("bossId", S.number())
-			.prop("playerId", S.number())
-			.prop("playerServer", S.string())
+			.prop("region", S.enum(regions).required())	
+			.prop("areaId", S.number().required())
+			.prop("bossId", S.number().required())
+			.prop("class", S.enum(classes))
+			.prop("excludeP2wConsums", S.boolean().required())
 		)
 			.valueOf(),
 		response: {
@@ -84,12 +84,12 @@ async function searchReq(fastify, options) {
 		await fastify.uploadModels.getLatestRuns(req.body, 70)
 	));
 
-	fastify.post("/search/player", { prefix: options.prefix, config: options.config, schema: schemaByPlayer }, async (req) => (
-		await fastify.uploadModels.getLatestRuns(req.body, 70)
+	fastify.post("/search/top", { prefix: options.prefix, config: options.config, schema: schemaByTop }, async (req) => (
+		await fastify.uploadModels.getTopRuns(req.body, 100)
 	));
-
+	
 	fastify.post("/search/id", { prefix: options.prefix, config: options.config, schema: schemaFull }, async (req) => (
-		await fastify.uploadModels.getCompleteRun({ "id": req.body.id.toString().trim() })
+		await fastify.uploadModels.getCompleteRun({ "id": req.body.id })
 	));
 }
 
