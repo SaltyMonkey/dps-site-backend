@@ -1,0 +1,12 @@
+{
+	"editor.renderWhitespace": "all",
+	"editor.insertSpaces": false,
+	"files.exclude": {
+		".gitattributes": true,
+		".gitignore": true,
+		"package-lock.json": true,
+		".github": true,
+		".vscode": true,
+		"LICENSE": true
+	}
+}
