@@ -39,6 +39,11 @@ fastify.register(require("./server/plugins/headers.js"), { changeTo: [ { header:
 fastify.register(require("./server/plugins/mongoose.js"), { connectionString: conf.dbConnectionString, poolSize: conf.dbPoolSize });
 fastify.register(require("./server/plugins/autoDecorator.js"), { folder: path.resolve(__dirname, "./server/models"), excludeIfNameContains: ["_"] });
 
+//set global schemas
+fastify.addSchema(require("./server/routes/v1/sharedSchemas/searchResponse2xx"));
+fastify.addSchema(require("./server/routes/v1/sharedSchemas/searchPostRequestBody"));
+fastify.addSchema(require("./server/routes/v1/sharedSchemas/completeDataSchema"));
+
 //init routes
 fastify.register(require("./server/routes/icon.js"));
 fastify.register(require("./server/routes/stats.js"));

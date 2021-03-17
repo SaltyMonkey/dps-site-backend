@@ -2,7 +2,7 @@
 	"dpsData": {
 		"whitelist": [
 			{
-				"areaId": 6969,
+				"AreaId": 6969,
 				"BossIds": []
 			}
 		]

@@ -23,7 +23,6 @@ const upload = new mongoose.Schema({
 		"unique": true
 	},
 	"uploadTime": { "type": String, "default": () => { `${Date.now()}`; } },
-	"uploadSoftwareVersion": String,
 	"region": String,
 	"bossId": Number,
 	"areaId": Number,
@@ -35,7 +34,7 @@ const upload = new mongoose.Schema({
 	}],
 	"isShame": Boolean,
 	"isP2WConsums": Boolean,
-	"uploader": { "type": mongoose.Schema.Types.ObjectId, "ref": "player" },
+	"uploader": { "type": mongoose.Schema.Types.ObjectId, "ref": "player", "autopopulate": true },
 	"members": [
 		{
 			"id": { "type": mongoose.Schema.Types.ObjectId, "ref": "player", "autopopulate": true },
@@ -73,7 +72,7 @@ upload.plugin(require("mongoose-autopopulate"));
 upload.statics.getLatestRuns = async function (searchParams, amount) {
 	let runs = [];
 	runs = await upload.find(searchParams, simplifiedView).sort({ "$natural": -1 }).limit(amount).lean();
-	return runs;
+	return runs || [];
 };
 
 upload.statics.getCompleteRun = async function (id) {
@@ -87,17 +86,20 @@ upload.statics.getTopRuns = async function (data) {
 				"region": data.region,
 				"bossId": data.bossId,
 				"areaId": data.areaId,
-				"members.class": data.class,
+				"members.playerClass": data.class,
 				"isP2WConsums": data.excludeP2wConsums
 			}
 		}, {
 			"$project": {
 				"id": 1,
-				"bossId": 1,
 				"areaId": 1,
+				"bossId": 1,
+				"uploadTime": 1,
+				"fightDuration": 1,
+				"isP2WConsums": 1,
 				"members.playerDps": 1,
-				"members.name": 1,
-				"members.class": 1
+				"members.playerClass": 1,
+				"members.playerName": 1
 			}
 		}, {
 			"$unwind": {
@@ -105,7 +107,7 @@ upload.statics.getTopRuns = async function (data) {
 			}
 		}, {
 			"$match": {
-				"members.class": "gunner"
+				"members.playerClass": data.class
 			}
 		}
 	])
