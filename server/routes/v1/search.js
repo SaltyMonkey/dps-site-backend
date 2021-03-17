@@ -8,16 +8,17 @@ const S = require("fluent-json-schema");
  * @param {*} options 
  */
 async function searchReq(fastify, options) {
+	const dpsData = options.dpsData;
 
 	const schemaRecent = {
-		body: fastify.getSchema("searchPostRequestBody"),
+		body: fastify.getSchema("searchRecentPostRequestBody"),
 		response: {
 			"2xx": fastify.getSchema("searchResponse2xx")
 		}
 	};
 
 	const schemaByTop = {
-		body: fastify.getSchema("searchPostRequestBody"),
+		body: fastify.getSchema("searchTopPostRequestBody"),
 		response: {
 			"2xx": fastify.getSchema("searchResponse2xx")
 		}
@@ -39,16 +40,31 @@ async function searchReq(fastify, options) {
 			params["members.playerClass"] = params.playerClass;
 			delete params.playerClass;
 		}
-		await fastify.uploadModels.getLatestRuns(params, 70);
+
+		const [dbError, res] = await fastify.to(fastify.uploadModels.getLatestRuns(params, dpsData.apiConfig.recentRunsAmount));
+		if(dbError) throw fastify.httpErrors.internalServerError("Internal database error");
+
+		return res;
 	});
 
-	fastify.post("/search/top", { prefix: options.prefix, config: options.config, schema: schemaByTop }, async (req) => (
-		await fastify.uploadModels.getTopRuns(req.body, 100)
-	));
+	fastify.post("/search/top", { prefix: options.prefix, config: options.config, schema: schemaByTop }, async (req) => {
+		let params = { ...req.body };
+		if (params.playerClass) {
+			params["members.playerClass"] = params.playerClass;
+			delete params.playerClass;
+		}
 
-	fastify.post("/search/id", { prefix: options.prefix, config: options.config, schema: schemaFull }, async (req) => (
-		await fastify.uploadModels.getCompleteRun(req.body.id)
-	));
+		const [dbError, res] = await fastify.to(fastify.uploadModels.getTopRuns(params, dpsData.apiConfig.topPlacesAmount));
+		if(dbError) throw fastify.httpErrors.internalServerError("Internal database error");
+		return res;
+	});
+
+	fastify.post("/search/id", { prefix: options.prefix, config: options.config, schema: schemaFull }, async (req) => {
+		const [dbError, res] = await fastify.to(fastify.uploadModels.getCompleteRun(req.body.id));
+		if(dbError) throw fastify.httpErrors.internalServerError("Internal database error");
+
+		return res; 
+	});
 }
 
 module.exports = searchReq;

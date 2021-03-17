@@ -3,14 +3,14 @@ const classes = require("../../../enums/classes");
 const regions = require("../../../enums/regions");
 
 module.exports = (S.object()
-	.id("searchPostRequestBody")
-	.description("All available parameters for search requests")
+	.id("searchRecentPostRequestBody")
+	.description("All available parameters for search in recent requests")
 	.additionalProperties(false)
 	.prop("region", S.enum(regions))
 	.prop("areaId", S.number())
 	.prop("bossId", S.number())
 	.prop("isShame", S.boolean())
 	.prop("playerClass", S.enum(classes))
-	.prop("excludeP2wConsums", S.boolean().required())
+	.prop("excludeP2wConsums", S.boolean())
 )
 	.valueOf();

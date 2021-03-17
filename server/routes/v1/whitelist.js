@@ -25,7 +25,7 @@ async function whitelistReq(fastify, options) {
 
 
 	fastify.get("/whitelist", { prefix, config: options.config, schema: schema }, async () => (
-		dpsData.whitelist
+		dpsData.dpsData.whitelist
 	));
 }
 

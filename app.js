@@ -5,7 +5,7 @@
 const fs = require("fs");
 const path = require("path");
 const conf = require("./server.json");
-const dpsData = require("./serverDpsData.json");
+const dpsData = require("./serverDpsDataConf.json");
 
 let opts = {
 	trustProxy: conf.serverTrustProxy,
@@ -41,7 +41,8 @@ fastify.register(require("./server/plugins/autoDecorator.js"), { folder: path.re
 
 //set global schemas
 fastify.addSchema(require("./server/routes/v1/sharedSchemas/searchResponse2xx"));
-fastify.addSchema(require("./server/routes/v1/sharedSchemas/searchPostRequestBody"));
+fastify.addSchema(require("./server/routes/v1/sharedSchemas/searchRecentPostRequestBody"));
+fastify.addSchema(require("./server/routes/v1/sharedSchemas/searchTopPostReqestBody.js"));
 fastify.addSchema(require("./server/routes/v1/sharedSchemas/completeDataSchema"));
 
 //init routes
@@ -50,7 +51,7 @@ fastify.register(require("./server/routes/stats.js"));
 fastify.register(require("./server/routes/apiList.js"));
 
 fastify.register(require("./server/routes/v1/whitelist.js"), { prefix: "/v1", dpsData});
-fastify.register(require("./server/routes/v1/search.js"), { prefix: "/v1"});
+fastify.register(require("./server/routes/v1/search.js"), { prefix: "/v1", dpsData});
 fastify.register(require("./server/routes/v1/control.js"), { prefix: "/v1"});
 
 const start = async () => {

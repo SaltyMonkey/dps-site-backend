@@ -6,5 +6,9 @@
 				"BossIds": []
 			}
 		]
+	},
+	"apiConfig": {
+		"topPlacesAmount": 150,
+		"recentRunsAmount": 50
 	}
 }
