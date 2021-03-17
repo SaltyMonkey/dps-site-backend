@@ -4,8 +4,8 @@
 
 const fs = require("fs");
 const path = require("path");
-const conf = require("./server.json");
-const dpsData = require("./serverDpsDataApi.json");
+const conf = require("./server/server.json");
+const dpsData = require("./server/serverDpsDataApi.json");
 
 //!TODO: Remove dat simple hack (contact Gl0 for updated shinra logic)
 const convertWhitelistInObject = (whitelist) => {
