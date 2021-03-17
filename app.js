@@ -52,11 +52,6 @@ fastify.register(require("./server/plugins/serverStatsReporter.js"), { botName: 
 fastify.register(require("./server/plugins/serverStatusChangeReporter.js"), { botName: "DPS backend", discordWebHook: conf.discordWebHook });
 
 //set global and/or bloated schemas
-fastify.addSchema(require("./server/routes/v1/sharedSchemas/searchResponse2xx"));
-fastify.addSchema(require("./server/routes/v1/sharedSchemas/searchRecentPostRequestBody"));
-fastify.addSchema(require("./server/routes/v1/sharedSchemas/searchTopPostReqestBody.js"));
-fastify.addSchema(require("./server/routes/v1/sharedSchemas/completeUploadPostRequest"));
-fastify.addSchema(require("./server/routes/v1/sharedSchemas/completeUploadDbResponse"));
 fastify.addSchema(require("./server/routes/v1/sharedSchemas/statusResponse"));
 
 //init static routes

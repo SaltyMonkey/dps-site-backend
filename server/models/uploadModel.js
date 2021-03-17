@@ -95,6 +95,7 @@ upload.statics.getTopRuns = async function (data, limit) {
 				"isP2WConsums": !data.excludeP2wConsums,
 				"isMultipleHeals": false,
 				"isMultipleTanks": false,
+				"isShame": false
 			}
 		}, {
 			"$project": {
