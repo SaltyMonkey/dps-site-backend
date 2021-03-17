@@ -26,6 +26,7 @@ const upload = new mongoose.Schema({
 	"region": String,
 	"bossId": Number,
 	"areaId": Number,
+	"isDoubleHeal": Boolean,
 	"fightDuration": Number,
 	"partyDps": String,
 	"debuffUptime": [{
@@ -79,7 +80,7 @@ upload.statics.getCompleteRun = async function (id) {
 	return await upload.findOne({ id: id }).lean();
 };
 
-upload.statics.getTopRuns = async function (data) {
+upload.statics.getTopRuns = async function (data, limit) {
 	return await upload.aggregate([
 		{
 			"$match": {
@@ -113,7 +114,7 @@ upload.statics.getTopRuns = async function (data) {
 	])
 		.collation({ locale: "en_US", numericOrdering: true })
 		.sort({ "members.playerDps": -1 })
-		.limit(150);
+		.limit(limit);
 };
 
 module.exports = mongoose.model("upload", upload);

@@ -1,9 +1,12 @@
 const fastifyPlugin = require("fastify-plugin");
 
 /**
- * setup some routes
+ * Apply custom headers to responses
  * @param {import("fastify").FastifyInstance} fastify 
- * @param {*} options 
+ * @param {Object} options - plugin options
+ * @param {Object[]} options.changeTo - array with headers
+ * @param {string} options.changeTo[].header - header string
+ * @param {string} options.changeTo[].value - header value
  */
 async function customHeadersForReq(fastify, options) {
 	const data = options.changeTo;

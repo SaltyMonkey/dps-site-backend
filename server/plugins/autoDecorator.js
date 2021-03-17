@@ -5,15 +5,16 @@ const fs = require("fs");
 const path = require("path");
 
 /**
- * setup some routes
+ * Decorate all files in folder
  * @param {import("fastify").FastifyInstance} fastify 
- * @param {*} options 
+ * @param {Object} options - autodecorator options
+ * @param {string} options.folder - folder to read files in
+ * @param {string[]} options.excludeIfNameContains - exclude flags to sikp files from decoration 
+
  */
 async function autoDecorator(fastify, options) {
 	const folder = options.folder;
-	delete options.folder;
 	const ignore = options.excludeIfNameContains;
-	delete options.excludeIfNameContains;
 
 	const files = fs.readdirSync(folder);
 	files.forEach((file) => {
@@ -27,6 +28,4 @@ async function autoDecorator(fastify, options) {
 
 }
 
-// Wrapping a plugin function with fastify-plugin exposes the decorators,
-// hooks, and middlewares declared inside the plugin to the parent scope.
 module.exports = fastifyPlugin(autoDecorator);

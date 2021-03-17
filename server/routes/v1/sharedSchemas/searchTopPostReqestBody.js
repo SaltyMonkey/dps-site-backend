@@ -9,7 +9,7 @@ module.exports = (S.object()
 	.prop("region", S.enum(regions).required())
 	.prop("areaId", S.number().required())
 	.prop("bossId", S.number().required())
-	.prop("playerClass", S.enum(classes).required())
+	.prop("playerClass", S.enum(Object.values(classes)).required())
 	.prop("excludeP2wConsums", S.boolean().required())
 )
 	.valueOf();

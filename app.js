@@ -38,6 +38,8 @@ fastify.register(require("./server/plugins/routeList.js"));
 fastify.register(require("./server/plugins/headers.js"), { changeTo: [ { header: "X-Powered-By", value: "Hamsters" } ]});
 fastify.register(require("./server/plugins/mongoose.js"), { connectionString: conf.dbConnectionString, poolSize: conf.dbPoolSize });
 fastify.register(require("./server/plugins/autoDecorator.js"), { folder: path.resolve(__dirname, "./server/models"), excludeIfNameContains: ["_"] });
+fastify.register(require("./server/plugins/serverStatsReporter.js"), { botName: "DPS backend", title: "Server stats", discordWebHook: conf.discordWebHook, cronString: conf.cronString, maxDelaysForCalc: 50000 });
+fastify.register(require("./server/plugins/serverStatusChangeReporter.js"), { botName: "DPS backend", discordWebHook: conf.discordWebHook });
 
 //set global schemas
 fastify.addSchema(require("./server/routes/v1/sharedSchemas/searchResponse2xx"));

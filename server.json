@@ -7,5 +7,7 @@
 	"serverMaxParamLength": 100,
 	"serverTrustProxy": false,
 	"dbConnectionString": "mongodb://localhost/dps",
-	"dbPoolSize": 100
+	"dbPoolSize": 100,
+	"discordWebHook": "",
+	"cronString": "0 0 00 * * *"
 }

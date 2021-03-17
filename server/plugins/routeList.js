@@ -1,7 +1,11 @@
 "use strict";
 
-const fp = require("fastify-plugin");
+const fastifyPlugin = require("fastify-plugin");
 
+/**
+ * Decorate fastify instance with info about routes in array
+ * @param {import("fastify").FastifyInstance} fastify 
+ */
 async function fastifyRoutes(fastify) {
 	fastify.decorate("routes", []);
 
@@ -20,4 +24,4 @@ async function fastifyRoutes(fastify) {
 	});
 }
 
-module.exports = fp(fastifyRoutes);
+module.exports = fastifyPlugin(fastifyRoutes);

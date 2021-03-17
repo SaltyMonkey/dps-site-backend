@@ -2,9 +2,11 @@ const fastifyPlugin = require("fastify-plugin");
 const mongoose = require("mongoose");
 
 /**
- * setup some routes
+ * Decorate mongoose and connect to database 
  * @param {import("fastify").FastifyInstance} fastify 
- * @param {*} options 
+ * @param {Object} options - autodecorator options
+ * @param {string} options.connectionString - database connection string
+ * @param {string} options.poolSize - database connection pool size
  */
 async function mongooseConnector(fastify, options) {
 	const str = options.connectionString;
@@ -24,6 +26,4 @@ async function mongooseConnector(fastify, options) {
 	});
 }
 
-// Wrapping a plugin function with fastify-plugin exposes the decorators,
-// hooks, and middlewares declared inside the plugin to the parent scope.
 module.exports = fastifyPlugin(mongooseConnector);

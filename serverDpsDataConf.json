@@ -1,5 +1,5 @@
 {
-	"dpsData": {
+	"dungeons": {
 		"whitelist": [
 			{
 				"AreaId": 6969,
@@ -9,6 +9,8 @@
 	},
 	"apiConfig": {
 		"topPlacesAmount": 150,
-		"recentRunsAmount": 50
+		"recentRunsAmount": 50,
+		"minMembersCount": 3,
+		"maxMembersCount": 30
 	}
 }
