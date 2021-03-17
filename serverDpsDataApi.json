@@ -1,0 +1,26 @@
+{
+	"apiConfig": {
+		"maxAllowedTimeDiffSec": 420,
+		"maxDurationSec": 1800,
+		"topPlacesAmount": 150,
+		"recentRunsAmount": 50,
+		"minMembersCount": 3,
+		"maxMembersCount": 30,
+		"minPartyDps": "10000000",
+		"maxPartyDps": "250000000",
+		"maxBossHpDiffPerc": 20
+	},
+	"uploadAnalyze": {
+		"minMultipleTanksTriggerAmount": 2,
+		"minMultipleHealersTriggerAmount": 2,
+		"tankAbnormals": [],
+		"isShameDeathsAmount": 10
+	},
+	"whitelist": [
+		{
+			"AreaId": 6969,
+			"BossIds": []
+		}
+	]
+
+}

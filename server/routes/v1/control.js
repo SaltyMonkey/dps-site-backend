@@ -1,7 +1,7 @@
 "use strict";
 
 const S = require("fluent-json-schema");
-
+const status = require("../../enums/statuses");
 /**
  * setup some routes
  * @param {import("fastify").FastifyInstance} fastify 
@@ -13,7 +13,7 @@ async function controlReq(fastify, options) {
 	const config = options.config;
 	const prefix = options.prefix;
 
-	const schema = {
+	const schemaApi = {
 		body: (
 			S.object()
 				.additionalProperties(false)
@@ -22,16 +22,46 @@ async function controlReq(fastify, options) {
 		)
 			.valueOf(),
 		response: {
-			"2xx": S.array().items(
-				S.object()
-					.additionalProperties(false)
-					.prop("status", S.string().minLength(10).maxLength(35).required())
-			)
-				.valueOf()
+			"2xx": fastify.getSchema("statusResSchema")
 		}
 	};
 
-	fastify.post("/control/access/add", { prefix: prefix, config, schema: schema }, async (req) => {
+	const schemaUploads = {
+		body: (
+			S.object()
+				.additionalProperties(false)
+				.prop("id", S.string().minLength(20).maxLength(50).required())
+				.prop(adminKeyName, S.string().minLength(20).maxLength(50).required())
+		)
+			.valueOf(),
+		response: {
+			"2xx": fastify.getSchema("statusResSchema")
+		}
+	};
+
+	fastify.post("/control/uploads/remove", { prefix: prefix, config, schema: schemaUploads }, async (req) => {
+		let uploadData = false;
+		let isAdmin = false;
+		let removeData = false;
+
+		let adminCheckDbStatus = false;
+		let uploadCheckDbAccess = false;
+		let deleteCheckDbStatus = false;
+
+		[adminCheckDbStatus, isAdmin] = await fastify.to(fastify.apiModel.isRoleAdmin(req.body[adminKeyName]));
+		[uploadCheckDbAccess, uploadData] = await fastify.to(fastify.uploadModel.getFromDbLinked(req.body["id"]));
+
+		if (adminCheckDbStatus || uploadCheckDbAccess) throw fastify.httpErrors.internalServerError("Internal database error");
+		if (!isAdmin || !uploadData) throw fastify.httpErrors.forbidden("Access denied!");
+
+		// eslint-disable-next-line no-unused-vars
+		[deleteCheckDbStatus, removeData] = await fastify.to(uploadData.delete());
+		if (deleteCheckDbStatus) throw fastify.httpErrors.internalServerError("Internal database error");
+
+		return { status: status.OK };
+	});
+
+	fastify.post("/control/access/add", { prefix: prefix, config, schema: schemaApi }, async (req) => {
 		let isApiKeyExists = false;
 		let isAdmin = false;
 
@@ -45,7 +75,7 @@ async function controlReq(fastify, options) {
 		if (adminCheckDbStatus || apiCheckDbAccess) throw fastify.httpErrors.internalServerError("Internal database error");
 		if (!isAdmin || isApiKeyExists) throw fastify.httpErrors.forbidden("Access denied!");
 
-		
+
 		const newApiKeyLink = new fastify.apiModel({
 			token: req.body[apiKeyName].toString()
 		});
@@ -54,10 +84,10 @@ async function controlReq(fastify, options) {
 		[addCheckDbStatus] = await fastify.to(newApiKeyLink.save());
 		if (addCheckDbStatus) throw fastify.httpErrors.internalServerError("Internal database error");
 
-		return { status: "OK" };
+		return { status: status.OK };
 	});
 
-	fastify.post("/control/access/remove", { prefix: prefix, config, schema: schema }, async (req) => {
+	fastify.post("/control/access/remove", { prefix: prefix, config, schema: schemaApi }, async (req) => {
 		let isAdmin = false;
 		let accessKeyObj = false;
 		let removeData = false;
@@ -71,12 +101,12 @@ async function controlReq(fastify, options) {
 
 		if (adminCheckdbStatus || userCheckDbStatus) throw fastify.httpErrors.internalServerError("Internal database error");
 		if (!isAdmin || !accessKeyObj) throw fastify.httpErrors.forbidden("Access denied!");
-		
+
 		// eslint-disable-next-line no-unused-vars
 		[deleteCheckDbStatus, removeData] = await fastify.to(accessKeyObj.delete());
 		if (deleteCheckDbStatus) throw fastify.httpErrors.internalServerError("Internal database error");
 
-		return { status: "OK" };
+		return { status: status.OK };
 	});
 }
 

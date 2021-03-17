@@ -11,8 +11,10 @@ module.exports = S.array()
 			.prop("uploadTime", S.string().required())
 			.prop("fightDuration", S.string().required())
 			.prop("isP2WConsums", S.boolean().required())
+			.prop("isMultipleTanks", S.boolean().required())
+			.prop("isMultipleHeals", S.boolean().required())
 			.prop("partyDps", S.string().required())
-			.prop("members", S.array().items(
+			.prop("members", S.array().required().items(
 				S.object()
 					.additionalProperties(false)
 					.prop("playerClass", S.string().required())

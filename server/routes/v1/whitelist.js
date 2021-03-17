@@ -9,7 +9,7 @@ const S = require("fluent-json-schema");
  */
 async function whitelistReq(fastify, options) {
 	const prefix = options.prefix;
-	const dpsData = options.dpsData;
+	const whitelist = options.whitelist;
 
 	const schema = {
 		response: {
@@ -25,7 +25,7 @@ async function whitelistReq(fastify, options) {
 
 
 	fastify.get("/whitelist", { prefix, config: options.config, schema: schema }, async () => (
-		dpsData.dungeons.whitelist
+		whitelist
 	));
 }
 

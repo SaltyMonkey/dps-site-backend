@@ -5,7 +5,17 @@
 const fs = require("fs");
 const path = require("path");
 const conf = require("./server.json");
-const dpsData = require("./serverDpsDataConf.json");
+const dpsData = require("./serverDpsDataApi.json");
+
+//!TODO: Remove dat simple hack (contact Gl0 for updated shinra logic)
+const convertWhitelistInObject = (whitelist) => {
+	let objView = {};
+	whitelist.forEach(element => {
+		objView[element.AreaId] = element.BossIds;
+	});
+
+	return objView;
+};
 
 let opts = {
 	trustProxy: conf.serverTrustProxy,
@@ -41,24 +51,28 @@ fastify.register(require("./server/plugins/autoDecorator.js"), { folder: path.re
 fastify.register(require("./server/plugins/serverStatsReporter.js"), { botName: "DPS backend", title: "Server stats", discordWebHook: conf.discordWebHook, cronString: conf.cronString, maxDelaysForCalc: 50000 });
 fastify.register(require("./server/plugins/serverStatusChangeReporter.js"), { botName: "DPS backend", discordWebHook: conf.discordWebHook });
 
-//set global schemas
+//set global and/or bloated schemas
 fastify.addSchema(require("./server/routes/v1/sharedSchemas/searchResponse2xx"));
 fastify.addSchema(require("./server/routes/v1/sharedSchemas/searchRecentPostRequestBody"));
 fastify.addSchema(require("./server/routes/v1/sharedSchemas/searchTopPostReqestBody.js"));
-fastify.addSchema(require("./server/routes/v1/sharedSchemas/completeDataSchema"));
+fastify.addSchema(require("./server/routes/v1/sharedSchemas/completeUploadPostRequest"));
+fastify.addSchema(require("./server/routes/v1/sharedSchemas/completeUploadDbResponse"));
+fastify.addSchema(require("./server/routes/v1/sharedSchemas/statusResponse"));
 
-//init routes
+//init static routes
 fastify.register(require("./server/routes/icon.js"));
 fastify.register(require("./server/routes/stats.js"));
 fastify.register(require("./server/routes/apiList.js"));
 
-fastify.register(require("./server/routes/v1/whitelist.js"), { prefix: "/v1", dpsData});
-fastify.register(require("./server/routes/v1/search.js"), { prefix: "/v1", dpsData});
+//init versioned api routes
+fastify.register(require("./server/routes/v1/whitelist.js"), { prefix: "/v1", whitelist: dpsData.whitelist });
+fastify.register(require("./server/routes/v1/search.js"), { prefix: "/v1", apiConfig: dpsData.apiConfig});
+fastify.register(require("./server/routes/v1/upload.js"), { prefix: "/v1", apiConfig: dpsData.apiConfig, whitelist: convertWhitelistInObject(dpsData.whitelist), analyze: dpsData.uploadAnalyze });
 fastify.register(require("./server/routes/v1/control.js"), { prefix: "/v1"});
 
 const start = async () => {
 	try {
-		await fastify.listen(process.env.secureServer ? 443 : conf.serverPort, conf.serverIp);
+		await fastify.listen(conf.secureServer ? 443 : conf.serverPort, conf.serverIp);
 	} catch (error) {
 		console.log(error);
 		// eslint-disable-next-line no-magic-numbers

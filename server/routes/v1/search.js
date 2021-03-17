@@ -8,7 +8,7 @@ const S = require("fluent-json-schema");
  * @param {*} options 
  */
 async function searchReq(fastify, options) {
-	const dpsData = options.dpsData;
+	const apiConfig = options.apiConfig;
 
 	const schemaRecent = {
 		body: fastify.getSchema("searchRecentPostRequestBody"),
@@ -30,7 +30,7 @@ async function searchReq(fastify, options) {
 			.prop("id", S.string().required()))
 			.valueOf(),
 		response: {
-			"2xx": fastify.getSchema("completeDetails")
+			"2xx": fastify.getSchema("completeUploadDbResponse")
 		}
 	};
 
@@ -41,7 +41,7 @@ async function searchReq(fastify, options) {
 			delete params.playerClass;
 		}
 
-		const [dbError, res] = await fastify.to(fastify.uploadModels.getLatestRuns(params, dpsData.apiConfig.recentRunsAmount));
+		const [dbError, res] = await fastify.to(fastify.uploadModels.getLatestRuns(params, apiConfig.recentRunsAmount));
 		if(dbError) throw fastify.httpErrors.internalServerError("Internal database error");
 
 		return res;
@@ -54,7 +54,7 @@ async function searchReq(fastify, options) {
 			delete params.playerClass;
 		}
 
-		const [dbError, res] = await fastify.to(fastify.uploadModels.getTopRuns(params, dpsData.apiConfig.topPlacesAmount));
+		const [dbError, res] = await fastify.to(fastify.uploadModels.getTopRuns(params, apiConfig.topPlacesAmount));
 		if(dbError) throw fastify.httpErrors.internalServerError("Internal database error");
 		return res;
 	});

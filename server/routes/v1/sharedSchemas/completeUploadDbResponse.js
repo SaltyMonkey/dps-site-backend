@@ -2,18 +2,24 @@ const S = require("fluent-json-schema");
 const classes = require("../../../enums/classes");
 
 module.exports = (S.object()
-	.id("completeDetails")
+	.id("completeUploadDbResponse")
 	.additionalProperties(false)
 	.prop("bossId", S.number().required())
 	.prop("areaId", S.number().required())
+	.prop("region", S.string().required())
+	.prop("encounterUnixEpoch", S.number().required())
 	.prop("fightDuration", S.string().required())
 	.prop("partyDps", S.string().required())
-	.prop("debuffUptime", S.array().items(
+	.prop("isMultipleHeals", S.boolean().required())
+	.prop("isMultipleTanks", S.boolean().required())
+	.prop("debuffUptime", S.array().required().items(
 		S.object()
 			.additionalProperties(false)
 			.prop("key", S.number().required())
 			.prop("value", S.number().required())
 	))
+	.prop("isShame", S.boolean().required())
+	.prop("isP2WConsums", S.boolean().required())
 	.prop("uploader", S.object()
 		.additionalProperties(false)
 		.prop("playerClass", S.enum(Object.values(classes)).required())
@@ -21,7 +27,7 @@ module.exports = (S.object()
 		.prop("playerId", S.number().required())
 		.prop("playerServerId", S.number().required())
 	)
-	.prop("members", S.array().items(
+	.prop("members", S.array().required().items(
 		S.object()
 			.prop("playerClass", S.enum(Object.values(classes)).required())
 			.prop("playerName", S.string().required())
@@ -34,13 +40,13 @@ module.exports = (S.object()
 			.prop("playerDps", S.string().required())
 			.prop("playerTotalDamage", S.string().required())
 			.prop("playerTotalDamagePercentage", S.number().required())
-			.prop("buffUptime", S.array().items(
+			.prop("buffUptime", S.array().required().items(
 				S.object()
 					.additionalProperties(false)
 					.prop("key", S.number().required())
 					.prop("value", S.number().required())
 			))
-			.prop("skillLog", S.array().items(
+			.prop("skillLog", S.array().required().items(
 				S.object()
 					.additionalProperties(false)
 					.prop("skillAverageCrit", S.string().required())

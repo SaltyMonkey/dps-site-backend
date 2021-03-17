@@ -2,13 +2,15 @@
   "name": "dps-site-backend",
   "version": "1.0.0",
   "description": "",
-  "main": "app.js",
+  "main": "./app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "lint": "npx eslint '**/*.js'",
+    "start": "node ./app.js",
+    "test": "tap -Rspec --only --no-coverage"
   },
   "keywords": [],
   "author": "SaltyMonkey",
-  "license": "ISC",
+  "license": "MIT",
   "engines": {
     "node": ">=15.0.0"
   },
@@ -29,6 +31,7 @@
     "@babel/eslint-parser": "^7.13.10",
     "eslint": "^7.22.0",
     "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-unicorn": "^28.0.2"
+    "eslint-plugin-unicorn": "^28.0.2",
+    "tap": "^14.11.0"
   }
 }
