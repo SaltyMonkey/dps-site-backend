@@ -1,5 +1,5 @@
 // You can have an object like this, or query a DB to get the values
-const classes = {
+const classes = Object.freeze({
 	ARCHER: "Archer",
 	LANCER: "Lancer",
 	WARRIOR: "Warrior",
@@ -13,6 +13,6 @@ const classes = {
 	VALK: "Valkirye",
 	BRAWLER: "Brawler",
 	BERS: "Berserker"
-};
+});
 
 module.exports = classes;
