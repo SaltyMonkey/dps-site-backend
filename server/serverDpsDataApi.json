@@ -1,6 +1,7 @@
 {
 	"apiConfig": {
 		"maxAllowedTimeDiffSec": 420,
+		"recentUploadTimeDiffSec": 60,
 		"maxDurationSec": 1800,
 		"topPlacesAmount": 150,
 		"recentRunsAmount": 50,

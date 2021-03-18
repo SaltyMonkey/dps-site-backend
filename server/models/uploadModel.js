@@ -56,7 +56,7 @@ const upload = new mongoose.Schema({
 			]
 		}
 	],
-});
+}, { useNestedStrict: true });
 
 upload.plugin(require("mongoose-autopopulate"));
 

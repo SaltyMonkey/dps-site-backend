@@ -5,7 +5,6 @@ const S = require("fluent-json-schema");
 
 const NodeCache = require("node-cache");
 const classes = require("../../enums/classes");
-const uploadsCache = new NodeCache({ stdTTL: 60, checkperiod: 20, useClones: false });
 
 const arraysHasIntersect = (arr1, arr2) => {
 	for (const item of arr1)
@@ -20,8 +19,6 @@ const generateUniqKey = (payload) => {
 	return `${payload.bossId}${payload.areaId}${playersIds.join("")}${playersServerIds.join("")}`;
 };
 
-const isAlreadyRegistered = (str) => uploadsCache.has(str);
-
 /**
  * setup some routes
  * @param {import("fastify").FastifyInstance} fastify 
@@ -32,6 +29,70 @@ async function uploadReq(fastify, options) {
 	const apiConfig = options.apiConfig;
 	const whitelist = options.whitelist;
 	const analyze = options.analyze;
+
+	const uploadsCache = new NodeCache({ stdTTL: 60, checkperiod: 20, useClones: false });
+
+	const isPlacedInCache = (str) => uploadsCache.has(str);
+
+	const schema = {
+		body: (S.object()
+			.id("completeUploadPostRequest")
+			.additionalProperties(false)
+			.prop("bossId", S.integer().minimum(0).required())
+			.prop("areaId", S.integer().minimum(0).required())
+			.prop("encounterUnixEpoch", S.integer().required())
+			.prop("fightDuration", S.string().minLength(2).required())
+			.prop("partyDps", S.string().minLength(5).required())
+			.prop("debuffUptime", S.array().required().items(
+				S.object()
+					.additionalProperties(false)
+					.prop("key", S.integer().minimum(1).required())
+					.prop("value", S.integer().minimum(1).required())
+			))
+			.prop("uploader", S.object()
+				.additionalProperties(false)
+				.prop("playerClass", S.enum(Object.values(classes)).required())
+				.prop("playerName", S.string().minLength(3).required())
+				.prop("playerId", S.integer().minimum(1).required())
+				.prop("playerServerId", S.integer().minimum(1).required())
+			)
+			.prop("members", S.array().required().items(
+				S.object()
+					.prop("playerClass", S.enum(Object.values(classes)).required())
+					.prop("playerName", S.string().minLength(3).required())
+					.prop("playerId", S.integer().minimum(1).required())
+					.prop("playerServerId", S.integer().minimum(1).required())
+					.prop("aggroPercent", S.integer().minimum(0).required())
+					.prop("playerAverageCritRate", S.integer().minimum(1).required())
+					.prop("playerDeathDuration", S.string().minLength(1).required())
+					.prop("playerDeaths", S.integer().minimum(0).maximum(999).required())
+					.prop("playerDps", S.string().required())
+					.prop("playerTotalDamage", S.string().required())
+					.prop("playerTotalDamagePercentage", S.integer().required())
+					.prop("buffUptime", S.array().required().items(
+						S.object()
+							.additionalProperties(false)
+							.prop("key", S.integer().minimum(1).required())
+							.prop("value", S.integer().minimum(1).required())
+					))
+					.prop("skillLog", S.array().required().items(
+						S.object()
+							.additionalProperties(false)
+							.prop("skillAverageCrit", S.string().required())
+							.prop("skillAverageWhite", S.string().required())
+							.prop("skillCritRate", S.integer().required())
+							.prop("skillDamagePercent", S.integer().required())
+							.prop("skillHighestCrit", S.string().required())
+							.prop("skillHits", S.string().required())
+							.prop("skillCasts", S.string().required())
+							.prop("skillId", S.integer().required())
+							.prop("skillLowestCrit", S.string().required())
+							.prop("skillTotalDamage", S.string().required())
+					))
+			))
+		)
+			.valueOf()
+	};
 
 	const prereqsCheck = (payload) => {
 		const currServerTimeSec = Date.now() / 1000;
@@ -51,6 +112,11 @@ async function uploadReq(fastify, options) {
 		if (payload.members.length < apiConfig.minMembersCount || payload.members.length > apiConfig.maxMembersCount) return false;
 
 		return true;
+	};
+
+	const isRecentUpload = (payload) => {
+		const currServerTimeSec = Date.now() / 1000;
+		return (currServerTimeSec - payload.encounterUnixEpoch < apiConfig.recentUploadTimeDiffSec);
 	};
 
 	const analyzePayload = (payload) => {
@@ -78,75 +144,68 @@ async function uploadReq(fastify, options) {
 		};
 	};
 
-	const schema = {
-		body: (S.object()
-			.id("completeUploadPostRequest")
-			.additionalProperties(false)
-			.prop("bossId", S.number().required())
-			.prop("areaId", S.number().required())
-			.prop("encounterUnixEpoch", S.number().required())
-			.prop("fightDuration", S.string().required())
-			.prop("partyDps", S.string().required())
-			.prop("debuffUptime", S.array().required().items(
-				S.object()
-					.additionalProperties(false)
-					.prop("key", S.number().required())
-					.prop("value", S.number().required())
-			))
-			.prop("uploader", S.object()
-				.additionalProperties(false)
-				.prop("playerClass", S.enum(Object.values(classes)).required())
-				.prop("playerName", S.string().required())
-				.prop("playerId", S.number().required())
-				.prop("playerServerId", S.number().required())
-			)
-			.prop("members", S.array().required().items(
-				S.object()
-					.prop("playerClass", S.enum(Object.values(classes)).required())
-					.prop("playerName", S.string().required())
-					.prop("playerId", S.number().required())
-					.prop("playerServerId", S.number().required())
-					.prop("aggroPercent", S.number().required())
-					.prop("playerAverageCritRate", S.number().required())
-					.prop("playerDeathDuration", S.string().required())
-					.prop("playerDeaths", S.number().required())
-					.prop("playerDps", S.string().required())
-					.prop("playerTotalDamage", S.string().required())
-					.prop("playerTotalDamagePercentage", S.number().required())
-					.prop("buffUptime", S.array().required().items(
-						S.object()
-							.additionalProperties(false)
-							.prop("key", S.number().required())
-							.prop("value", S.number().required())
-					))
-					.prop("skillLog", S.array().required().items(
-						S.object()
-							.additionalProperties(false)
-							.prop("skillAverageCrit", S.string().required())
-							.prop("skillAverageWhite", S.string().required())
-							.prop("skillCritRate", S.number().required())
-							.prop("skillDamagePercent", S.number().required())
-							.prop("skillHighestCrit", S.string().required())
-							.prop("skillHits", S.string().required())
-							.prop("skillCasts", S.string().required())
-							.prop("skillId", S.number().required())
-							.prop("skillLowestCrit", S.string().required())
-							.prop("skillTotalDamage", S.string().required())
-					))
-			))
-		)
-			.valueOf()
+	const updatePlayerOrAddAndReturfRef = async (playerRaw) => {
+		let ref = await fastify.playerModel.getFromDbLinked(playerRaw.playerServerId, playerRaw.playerId, playerRaw.playerClass);
+
+		if (ref) {
+			if (ref.playerName !== playerRaw.playerName) {
+				ref.playerName = playerRaw.playerName;
+				await ref.save();
+			}
+		} else if (!ref) {
+			let newPlayerRef = new fastify.playerModel({
+				playerClass: playerRaw.playerClass,
+				playerName: playerRaw.playerName,
+				playerId: playerRaw.playerId,
+				playerServerId: playerRaw.playerServerId
+			});
+
+			await newPlayerRef.save();
+
+			ref = await fastify.playerModel.getFromDbLinked(playerRaw.playerServerId, playerRaw.playerId, playerRaw.playerClass);
+		}
+
+		return ref;
 	};
 
 	fastify.get("/upload", { prefix, config: options.config, schema }, async (req) => {
-		let uniqKey = generateUniqKey(req.body);
-
 		//basic validation of data
 		if (!prereqsCheck(req.body)) throw fastify.httpErrors.forbidden("Can't accept this upload");
-		//Fast check in cache by uniq string gathered in payload without accessign database
-		if (isAlreadyRegistered(uniqKey)) throw fastify.httpErrors.forbidden("Upload was already registered.");
+
+		//If time diff less than recentUploadTimeDiffSec then it is fresh run and we can skip db lookup
+		if (isRecentUpload(res.body)) {
+			//Fast check in cache by uniq string gathered in payload without accessing database
+			if (isPlacedInCache(generateUniqKey(req.body))) throw fastify.httpErrors.forbidden("Upload was already registered.");
+		}
+		// welp, if run wasnt fresh then we gotta check for duplicate
+		//else if(runInDb(req.body)) throw fastify.httpErrors.forbidden("Upload was already registered.");
 
 		const analyzeRes = analyzePayload(req.body);
+
+		const [uploaderDbError, uploader] = await updatePlayerOrAddAndReturfRef(req.body.uploader);
+		if (uploaderDbError) throw fastify.httpErrors.internalServerError("Internal database error");
+
+		//create db view
+		let dbView = new fastify.uploadModel(req.body);
+		dbView.uploader = uploader;
+		dbView.isShame = analyzeRes.isShame;
+		dbView.isMultipleTanks = analyzeRes.isMultipleTanks;
+		dbView.isMultipleHeals = analyzeRes.isMultipleHeals;
+
+		dbView.members = [];
+
+		req.body.members.forEach(async member => {
+			const [memberDbError, ref] = await updatePlayerOrAddAndReturfRef(member);
+			if (memberDbError) throw fastify.httpErrors.internalServerError("Internal database error");
+			const obj = member;
+			obj.id = ref;
+			dbView.members.push(obj);
+		});
+
+		const [saveUploadDbError, res] = await dbView.save();
+		if (saveUploadDbError) throw fastify.httpErrors.internalServerError("Internal database error");
+
+		return { "status": "OK" };
 	});
 }
 

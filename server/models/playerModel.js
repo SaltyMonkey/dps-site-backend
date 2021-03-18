@@ -9,4 +9,12 @@ const playerSchema = new mongoose.Schema({
 	"playerServerId" : Number
 });
 
+playerSchema.statics.getFromDbLinked = async function (serverId, playerId, playerClass) {
+	return await this.findOne({
+		playerId: playerId,
+		playerServerId: serverId,
+		playerClass: playerClass.trim()
+	});
+};
+
 module.exports = mongoose.model("player", playerSchema);
