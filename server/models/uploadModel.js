@@ -130,4 +130,7 @@ upload.statics.getFromDbLinked = async function (id) {
 	});
 };
 
+upload.statics.getFromDb = async function (searchParams) {
+	return await this.findOne(searchParams, { "_id": 1 }).lean();
+};
 module.exports = mongoose.model("upload", upload);

@@ -2,6 +2,8 @@
 
 const S = require("fluent-json-schema");
 const status = require("../../enums/statuses");
+const role = require("../../enums/roles");
+
 /**
  * setup some routes
  * @param {import("fastify").FastifyInstance} fastify 
@@ -39,6 +41,18 @@ async function controlReq(fastify, options) {
 		}
 	};
 
+	const isRoleAdmin =async (token) => {
+		const dbLink = await fastify.apiModel.getFromDb({
+			token: token.trim()
+		});
+	
+		if (!dbLink) return false;
+	
+		if (dbLink.role !== role.ADMIN) return false;
+	
+		return true;
+	};
+	
 	fastify.post("/control/uploads/remove", { prefix: prefix, config, schema: schemaUploads }, async (req) => {
 		let uploadData = false;
 		let isAdmin = false;
@@ -48,7 +62,7 @@ async function controlReq(fastify, options) {
 		let uploadCheckDbAccess = false;
 		let deleteCheckDbStatus = false;
 
-		[adminCheckDbStatus, isAdmin] = await fastify.to(fastify.apiModel.isRoleAdmin(req.body[adminKeyName]));
+		[adminCheckDbStatus, isAdmin] = await fastify.to(isRoleAdmin(req.body[adminKeyName]));
 		[uploadCheckDbAccess, uploadData] = await fastify.to(fastify.uploadModel.getFromDbLinked(req.body["id"]));
 
 		if (adminCheckDbStatus || uploadCheckDbAccess) throw fastify.httpErrors.internalServerError("Internal database error");
@@ -69,7 +83,7 @@ async function controlReq(fastify, options) {
 		let apiCheckDbAccess = false;
 		let addCheckDbStatus = false;
 
-		[adminCheckDbStatus, isAdmin] = await fastify.to(fastify.apiModel.isRoleAdmin(req.body[adminKeyName]));
+		[adminCheckDbStatus, isAdmin] = await fastify.to(isRoleAdmin(req.body[adminKeyName]));
 		[apiCheckDbAccess, isApiKeyExists] = await fastify.to(fastify.apiModel.getFromDb(req.body[apiKeyName]));
 
 		if (adminCheckDbStatus || apiCheckDbAccess) throw fastify.httpErrors.internalServerError("Internal database error");
@@ -96,7 +110,7 @@ async function controlReq(fastify, options) {
 		let userCheckDbStatus = false;
 		let deleteCheckDbStatus = false;
 
-		[adminCheckdbStatus, isAdmin] = await fastify.to(fastify.apiModel.isRoleAdmin(req.body[adminKeyName]));
+		[adminCheckdbStatus, isAdmin] = await fastify.to(isRoleAdmin(req.body[adminKeyName]));
 		[userCheckDbStatus, accessKeyObj] = await fastify.to(fastify.apiModel.getFromDbLinked(req.body[apiKeyName]));
 
 		if (adminCheckdbStatus || userCheckDbStatus) throw fastify.httpErrors.internalServerError("Internal database error");

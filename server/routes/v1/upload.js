@@ -114,11 +114,6 @@ async function uploadReq(fastify, options) {
 		return true;
 	};
 
-	const isRecentUpload = (payload) => {
-		const currServerTimeSec = Date.now() / 1000;
-		return (currServerTimeSec - payload.encounterUnixEpoch < apiConfig.recentUploadTimeDiffSec);
-	};
-
 	const analyzePayload = (payload) => {
 		let tanksCounter = 0;
 		let healersCounter = 0;
@@ -168,23 +163,26 @@ async function uploadReq(fastify, options) {
 		return ref;
 	};
 
+	// eslint-disable-next-line arrow-body-style
+	const isDuplicate = async (payload) => {
+		//const res = await fastify.uploadModel.getFromDb({ payload:})
+		return false;
+	};
+
 	fastify.get("/upload", { prefix, config: options.config, schema }, async (req) => {
 		//basic validation of data
 		if (!prereqsCheck(req.body)) throw fastify.httpErrors.forbidden("Can't accept this upload");
+		//Fast check in cache by uniq string gathered in payload without accessing database
+		if (isPlacedInCache(generateUniqKey(req.body))) throw fastify.httpErrors.forbidden("Upload was already registered.");
 
-		//If time diff less than recentUploadTimeDiffSec then it is fresh run and we can skip db lookup
-		if (isRecentUpload(res.body)) {
-			//Fast check in cache by uniq string gathered in payload without accessing database
-			if (isPlacedInCache(generateUniqKey(req.body))) throw fastify.httpErrors.forbidden("Upload was already registered.");
-		}
-		// welp, if run wasnt fresh then we gotta check for duplicate
-		//else if(runInDb(req.body)) throw fastify.httpErrors.forbidden("Upload was already registered.");
+		const [dupDbError, dres] = await fastify.to(isDuplicate(req.body));
+		if (dres) throw fastify.httpErrors.forbidden("Upload was already registered.");
+		if (dupDbError) throw fastify.httpErrors.forbidden("Internal database error");
 
-		const analyzeRes = analyzePayload(req.body);
-
-		const [uploaderDbError, uploader] = await updatePlayerOrAddAndReturfRef(req.body.uploader);
+		const [uploaderDbError, uploader] = await fastify.to(updatePlayerOrAddAndReturfRef(req.body.uploader));
 		if (uploaderDbError) throw fastify.httpErrors.internalServerError("Internal database error");
 
+		const analyzeRes = analyzePayload(req.body);
 		//create db view
 		let dbView = new fastify.uploadModel(req.body);
 		dbView.uploader = uploader;
@@ -195,14 +193,14 @@ async function uploadReq(fastify, options) {
 		dbView.members = [];
 
 		req.body.members.forEach(async member => {
-			const [memberDbError, ref] = await updatePlayerOrAddAndReturfRef(member);
+			const [memberDbError, ref] = await fastify.to(updatePlayerOrAddAndReturfRef(member));
 			if (memberDbError) throw fastify.httpErrors.internalServerError("Internal database error");
 			const obj = member;
 			obj.id = ref;
 			dbView.members.push(obj);
 		});
 
-		const [saveUploadDbError, res] = await dbView.save();
+		const [saveUploadDbError, res] = await fastify.to(dbView.save());
 		if (saveUploadDbError) throw fastify.httpErrors.internalServerError("Internal database error");
 
 		return { "status": "OK" };
