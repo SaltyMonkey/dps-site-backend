@@ -183,7 +183,7 @@ async function uploadReq(fastify, options) {
 		return !!(await fastify.apiModel.getFromDb(headers[authHeader].toString().trim()));
 	};
 
-	fastify.get("/upload", { prefix, config: options.config, schema }, async (req) => {
+	fastify.post("/upload", { prefix, config: options.config, schema }, async (req) => {
 
 		if (!apiConfig.allowAnonymousUpload) {
 			const [authCheckDbError, dbres] = await fastify.to(isAuthTokenInDb(req.headers));
