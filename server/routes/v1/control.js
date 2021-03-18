@@ -10,19 +10,25 @@ const role = require("../../enums/roles");
  * @param {*} options 
  */
 async function controlReq(fastify, options) {
-	const adminKeyName = "adminApiKey";
 	const apiKeyName = "apiKey";
 	const config = options.config;
 	const prefix = options.prefix;
+	const authHeader = options.apiConfig.authCheckHeader;
+
+	const headersSchema = (
+		S.object()
+			.prop(authHeader, S.string().minLength(20).maxLength(50).required())
+	)
+		.valueOf();
 
 	const schemaApi = {
 		body: (
 			S.object()
 				.additionalProperties(false)
 				.prop(apiKeyName, S.string().minLength(20).maxLength(50).required())
-				.prop(adminKeyName, S.string().minLength(20).maxLength(50).required())
 		)
 			.valueOf(),
+		headers: headersSchema,
 		response: {
 			"2xx": fastify.getSchema("statusResSchema")
 		}
@@ -32,27 +38,27 @@ async function controlReq(fastify, options) {
 		body: (
 			S.object()
 				.additionalProperties(false)
-				.prop("id", S.string().minLength(20).maxLength(50).required())
-				.prop(adminKeyName, S.string().minLength(20).maxLength(50).required())
+				.prop("uploadId", S.string().minLength(20).maxLength(50).required())
 		)
 			.valueOf(),
+		headers: headersSchema,
 		response: {
 			"2xx": fastify.getSchema("statusResSchema")
 		}
 	};
 
-	const isRoleAdmin =async (token) => {
+	const isRoleAdmin = async (token) => {
 		const dbLink = await fastify.apiModel.getFromDb({
 			token: token.trim()
 		});
-	
+
 		if (!dbLink) return false;
-	
+
 		if (dbLink.role !== role.ADMIN) return false;
-	
+
 		return true;
 	};
-	
+
 	fastify.post("/control/uploads/remove", { prefix: prefix, config, schema: schemaUploads }, async (req) => {
 		let uploadData = false;
 		let isAdmin = false;
@@ -62,7 +68,7 @@ async function controlReq(fastify, options) {
 		let uploadCheckDbAccess = false;
 		let deleteCheckDbStatus = false;
 
-		[adminCheckDbStatus, isAdmin] = await fastify.to(isRoleAdmin(req.body[adminKeyName]));
+		[adminCheckDbStatus, isAdmin] = await fastify.to(isRoleAdmin(req.headers[authHeader]));
 		[uploadCheckDbAccess, uploadData] = await fastify.to(fastify.uploadModel.getFromDbLinked(req.body["id"]));
 
 		if (adminCheckDbStatus || uploadCheckDbAccess) throw fastify.httpErrors.internalServerError("Internal database error");
@@ -83,7 +89,7 @@ async function controlReq(fastify, options) {
 		let apiCheckDbAccess = false;
 		let addCheckDbStatus = false;
 
-		[adminCheckDbStatus, isAdmin] = await fastify.to(isRoleAdmin(req.body[adminKeyName]));
+		[adminCheckDbStatus, isAdmin] = await fastify.to(isRoleAdmin(req.headers[authHeader]));
 		[apiCheckDbAccess, isApiKeyExists] = await fastify.to(fastify.apiModel.getFromDb(req.body[apiKeyName]));
 
 		if (adminCheckDbStatus || apiCheckDbAccess) throw fastify.httpErrors.internalServerError("Internal database error");
@@ -110,7 +116,7 @@ async function controlReq(fastify, options) {
 		let userCheckDbStatus = false;
 		let deleteCheckDbStatus = false;
 
-		[adminCheckdbStatus, isAdmin] = await fastify.to(isRoleAdmin(req.body[adminKeyName]));
+		[adminCheckdbStatus, isAdmin] = await fastify.to(isRoleAdmin(req.headers[authHeader]));
 		[userCheckDbStatus, accessKeyObj] = await fastify.to(fastify.apiModel.getFromDbLinked(req.body[apiKeyName]));
 
 		if (adminCheckdbStatus || userCheckDbStatus) throw fastify.httpErrors.internalServerError("Internal database error");

@@ -63,7 +63,7 @@ fastify.register(require("./server/routes/apiList.js"));
 fastify.register(require("./server/routes/v1/whitelist.js"), { prefix: "/v1", whitelist: dpsData.whitelist });
 fastify.register(require("./server/routes/v1/search.js"), { prefix: "/v1", apiConfig: dpsData.apiConfig});
 fastify.register(require("./server/routes/v1/upload.js"), { prefix: "/v1", apiConfig: dpsData.apiConfig, whitelist: convertWhitelistInObject(dpsData.whitelist), analyze: dpsData.uploadAnalyze });
-fastify.register(require("./server/routes/v1/control.js"), { prefix: "/v1"});
+fastify.register(require("./server/routes/v1/control.js"), { prefix: "/v1", apiConfig: dpsData.apiConfig });
 
 const start = async () => {
 	try {

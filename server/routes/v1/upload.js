@@ -29,6 +29,7 @@ async function uploadReq(fastify, options) {
 	const apiConfig = options.apiConfig;
 	const whitelist = options.whitelist;
 	const analyze = options.analyze;
+	const authHeader = options.apiConfig.authCheckHeader;
 
 	const uploadsCache = new NodeCache({ stdTTL: 60, checkperiod: 20, useClones: false });
 
@@ -91,7 +92,15 @@ async function uploadReq(fastify, options) {
 					))
 			))
 		)
-			.valueOf()
+			.valueOf(),
+		headers: (
+			S.object()
+				.prop(authHeader, S.string().minLength(20).maxLength(50))
+		)
+			.valueOf(),
+		response: {
+			"2xx": fastify.getSchema("statusResSchema")
+		}
 	};
 
 	const prereqsCheck = (payload) => {
@@ -169,7 +178,19 @@ async function uploadReq(fastify, options) {
 		return false;
 	};
 
+	const isAuthTokenInDb = async (headers) => {
+		if(!headers[authHeader]) return false;
+		return !!(await fastify.apiModel.getFromDb(headers[authHeader].toString().trim()));
+	};
+
 	fastify.get("/upload", { prefix, config: options.config, schema }, async (req) => {
+
+		if (!apiConfig.allowAnonymousUpload) {
+			const [authCheckDbError, dbres] = await fastify.to(isAuthTokenInDb(req.headers));
+			if (authCheckDbError) fastify.httpErrors.forbidden("Internal database error");
+			if (!dbres) throw fastify.httpErrors.forbidden("Invalid auth");
+		}
+
 		//basic validation of data
 		if (!prereqsCheck(req.body)) throw fastify.httpErrors.forbidden("Can't accept this upload");
 		//Fast check in cache by uniq string gathered in payload without accessing database

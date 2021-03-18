@@ -1,5 +1,6 @@
 {
 	"apiConfig": {
+		"allowAnonymousUpload": true,
 		"maxAllowedTimeDiffSec": 420,
 		"maxDurationSec": 1800,
 		"topPlacesAmount": 150,
@@ -8,7 +9,9 @@
 		"maxMembersCount": 30,
 		"minPartyDps": "10000000",
 		"maxPartyDps": "250000000",
-		"maxBossHpDiffPerc": 20
+		"maxBossHpDiffPerc": 20,
+		"authCheckHeader": "x-access-token"
+
 	},
 	"uploadAnalyze": {
 		"minMultipleTanksTriggerAmount": 2,
