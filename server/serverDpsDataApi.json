@@ -21,9 +21,12 @@
 	},
 	"whitelist": [
 		{
-			"AreaId": 6969,
+			"huntingZoneId": 6969,
 			"BossIds": []
 		}
-	]
+	],
+	"regions": {
+		
+	}
 
 }

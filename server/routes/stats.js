@@ -14,7 +14,6 @@ async function statsReq(fastify, options) {
 			"2xx": (S.object()
 				.additionalProperties(false)
 				.prop("uptime", S.number().required())
-				.prop("dbStatus", S.number().required())
 				.prop("serverTime", S.string().required())
 			)
 				.valueOf()
@@ -23,7 +22,6 @@ async function statsReq(fastify, options) {
 
 	fastify.get("/live", { config: options.config, schema: schema }, async () => ({
 		uptime: process.uptime(),
-		dbStatus: fastify.mongoose.connection.readyState,
 		serverTime: new Date().toISOString()
 	}));
 }

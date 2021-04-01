@@ -14,32 +14,26 @@ const upload = new mongoose.Schema({
 	"encounterUnixEpoch": { "type": Number, "default": () => { Date.now(); } },
 	"region": String,
 	"bossId": Number,
-	"areaId": Number,
+	"huntingZoneId": Number,
 	"isMultipleHeals": Boolean,
 	"isMultipleTanks": Boolean,
 	"fightDuration": Number,
 	"partyDps": String,
-	"debuffUptime": [{
-		"key": Number,
-		"value": Number
-	}],
+	"debuffDetail": [],
 	"isShame": Boolean,
 	"isP2WConsums": Boolean,
 	"uploader": { "type": mongoose.Schema.Types.ObjectId, "ref": "player", "autopopulate": true },
 	"members": [
 		{
 			"id": { "type": mongoose.Schema.Types.ObjectId, "ref": "player", "autopopulate": true },
-			"aggroPercent": Number,
+			"aggro": Number,
 			"playerAverageCritRate": Number,
 			"playerDeathDuration": String,
 			"playerDeaths": Number,
 			"playerDps": String,
 			"playerTotalDamage": String,
 			"playerTotalDamagePercentage": Number,
-			"buffUptime": [{
-				"key": Number,
-				"value": Number
-			}],
+			"buffDetail": [],
 			"skillLog": [
 				{
 					"skillAverageCrit": String,
@@ -62,7 +56,7 @@ upload.plugin(require("mongoose-autopopulate"));
 
 const simplifiedView = {
 	"id": 1,
-	"areaId": 1,
+	"huntingZoneId": 1,
 	"bossId": 1,
 	"uploadTime": 1,
 	"fightDuration": 1,
@@ -90,7 +84,7 @@ upload.statics.getTopRuns = async function (data, limit) {
 			"$match": {
 				"region": data.region,
 				"bossId": data.bossId,
-				"areaId": data.areaId,
+				"huntingZoneId": data.huntingZoneId,
 				"members.playerClass": data.class,
 				"isP2WConsums": !data.excludeP2wConsums,
 				"isMultipleHeals": false,
@@ -100,7 +94,7 @@ upload.statics.getTopRuns = async function (data, limit) {
 		}, {
 			"$project": {
 				"id": 1,
-				"areaId": 1,
+				"huntingZoneId": 1,
 				"bossId": 1,
 				"encounterUnixEpoch ": 1,
 				"fightDuration": 1,
@@ -115,7 +109,7 @@ upload.statics.getTopRuns = async function (data, limit) {
 			}
 		}, {
 			"$match": {
-				"members.playerClass": data.class
+				"members.playerClass": data.playerClass
 			}
 		}
 	])

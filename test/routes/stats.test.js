@@ -14,5 +14,5 @@ test("API: live access", { only: true }, async t => {
 		method: "GET"
 	});
 
-	t.strictEqual(res.statusCode, 404, "GET: Response status code must be 200");
+	t.equal(res.statusCode, 200, "GET: Response status code must be 200");
 });

@@ -44,51 +44,36 @@ async function uploadReq(fastify, options) {
 			.prop("encounterUnixEpoch", S.integer().required())
 			.prop("fightDuration", S.string().minLength(2).required())
 			.prop("partyDps", S.string().minLength(5).required())
-			.prop("debuffUptime", S.array().required().items(
-				S.object()
-					.additionalProperties(false)
-					.prop("key", S.integer().minimum(1).required())
-					.prop("value", S.integer().minimum(1).required())
-			))
-			.prop("uploader", S.object()
-				.additionalProperties(false)
-				.prop("playerClass", S.enum(Object.values(classes)).required())
-				.prop("playerName", S.string().minLength(3).required())
-				.prop("playerId", S.integer().minimum(1).required())
-				.prop("playerServerId", S.integer().minimum(1).required())
-			)
+			.prop("debuffDetail", S.array().required())
+			.prop("uploader", S.string().required())
 			.prop("members", S.array().required().items(
 				S.object()
 					.prop("playerClass", S.enum(Object.values(classes)).required())
 					.prop("playerName", S.string().minLength(3).required())
 					.prop("playerId", S.integer().minimum(1).required())
-					.prop("playerServerId", S.integer().minimum(1).required())
-					.prop("aggroPercent", S.integer().minimum(0).required())
+					.prop("playerServerId", S.integer().required())
+					.prop("playerServer", S.string().required())
+					.prop("aggro", S.integer().minimum(0).required())
 					.prop("playerAverageCritRate", S.integer().minimum(1).required())
 					.prop("playerDeathDuration", S.string().minLength(1).required())
 					.prop("playerDeaths", S.integer().minimum(0).maximum(999).required())
 					.prop("playerDps", S.string().required())
 					.prop("playerTotalDamage", S.string().required())
 					.prop("playerTotalDamagePercentage", S.integer().required())
-					.prop("buffUptime", S.array().required().items(
-						S.object()
-							.additionalProperties(false)
-							.prop("key", S.integer().minimum(1).required())
-							.prop("value", S.integer().minimum(1).required())
-					))
+					.prop("buffDetail", S.array().required())
 					.prop("skillLog", S.array().required().items(
 						S.object()
 							.additionalProperties(false)
-							.prop("skillAverageCrit", S.string().required())
-							.prop("skillAverageWhite", S.string().required())
-							.prop("skillCritRate", S.integer().required())
-							.prop("skillDamagePercent", S.integer().required())
-							.prop("skillHighestCrit", S.string().required())
-							.prop("skillHits", S.string().required())
-							.prop("skillCasts", S.string().required())
+							.prop("skillAverageCrit", S.string())
+							.prop("skillAverageWhite", S.string())
+							.prop("skillCritRate", S.integer())
+							.prop("skillDamagePercent", S.integer())
+							.prop("skillHighestCrit", S.string())
+							.prop("skillHits", S.string())
+							.prop("skillCasts", S.string())
 							.prop("skillId", S.integer().required())
-							.prop("skillLowestCrit", S.string().required())
-							.prop("skillTotalDamage", S.string().required())
+							.prop("skillLowestCrit", S.string())
+							.prop("skillTotalDamage", S.string())
 					))
 			))
 		)
@@ -109,9 +94,9 @@ async function uploadReq(fastify, options) {
 		//allowed time diff 
 		if (timeDataDiff > apiConfig.maxAllowedTimeDiffSec || timeDataDiff < 0) return false;
 
-		//allowed area and boss
-		const area = whitelist[payload.areaId];
-		if (!area || area && Array.isArray(area) && area.length > 0 && !area.includes(payload.bossId)) return false;
+		//allowed huntingZone and boss
+		const huntingZoneId = whitelist[payload.areaId];
+		if (!huntingZoneId || huntingZoneId && Array.isArray(huntingZoneId) && huntingZoneId.length > 0 && !huntingZoneId.includes(payload.bossId)) return false;
 
 		//compare party dps dps
 		const partyDps = BigInt(payload.partyDps);
@@ -119,7 +104,11 @@ async function uploadReq(fastify, options) {
 
 		//compare members amounts
 		if (payload.members.length < apiConfig.minMembersCount || payload.members.length > apiConfig.maxMembersCount) return false;
-
+		//check validity of uploader
+		if (payload.members.length > Number(payload.uploader)) return false;
+		
+		//check buffs and debuffs
+		//!TODO: finish check of buffs/debuffs
 		return true;
 	};
 
@@ -161,7 +150,8 @@ async function uploadReq(fastify, options) {
 				playerClass: playerRaw.playerClass,
 				playerName: playerRaw.playerName,
 				playerId: playerRaw.playerId,
-				playerServerId: playerRaw.playerServerId
+				playerServerId: playerRaw.playerServerId,
+				playerServer: playerRaw.playerServer
 			});
 
 			await newPlayerRef.save();
@@ -174,6 +164,7 @@ async function uploadReq(fastify, options) {
 
 	// eslint-disable-next-line arrow-body-style
 	const isDuplicate = async (payload) => {
+		//!TODO: finish check of buffs/debuffs
 		//const res = await fastify.uploadModel.getFromDb({ payload:})
 		return false;
 	};
@@ -200,12 +191,14 @@ async function uploadReq(fastify, options) {
 		if (dres) throw fastify.httpErrors.forbidden("Upload was already registered.");
 		if (dupDbError) throw fastify.httpErrors.forbidden("Internal database error");
 
-		const [uploaderDbError, uploader] = await fastify.to(updatePlayerOrAddAndReturfRef(req.body.uploader));
+		const [uploaderDbError, uploader] = await fastify.to(updatePlayerOrAddAndReturfRef(req.body.members[req.body.uploader]));
 		if (uploaderDbError) throw fastify.httpErrors.internalServerError("Internal database error");
 
 		const analyzeRes = analyzePayload(req.body);
 		//create db view
 		let dbView = new fastify.uploadModel(req.body);
+		dbView.region = 
+		dbView.huntingZoneId = req.body.areaId;
 		dbView.uploader = uploader;
 		dbView.isShame = analyzeRes.isShame;
 		dbView.isMultipleTanks = analyzeRes.isMultipleTanks;

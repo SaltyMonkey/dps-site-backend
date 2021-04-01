@@ -28,7 +28,7 @@ test("headers plugin", { only: true }, async t => {
 		method: "GET"
 	});
 
-	t.strictEqual(res.statusCode, 200, "GET: Response status code");
-	t.strictEqual(res.headers["test"], "Hamsters", "GET: test header check");
-	t.strictEqual(res.headers["second-header"], "Test-Value", "GET: test header 2 check");
+	t.equal(res.statusCode, 200, "GET: Response status code");
+	t.equal(res.headers["test"], "Hamsters", "GET: test header check");
+	t.equal(res.headers["second-header"], "Test-Value", "GET: test header 2 check");
 });

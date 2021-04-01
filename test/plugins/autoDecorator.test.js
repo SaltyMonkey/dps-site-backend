@@ -11,7 +11,7 @@ test("auto decorator plugin", { only: true }, async t => {
 	fastify.register(require("../../server/plugins/autoDecorator.js"), { folder: path.resolve(__dirname, "../../server/enums"), excludeIfNameContains: ["_"] });
 	await fastify.ready();
 
-	t.strictEqual(fastify.hasDecorator("statuses"), true, "statuses enums was decorated");
-	t.strictEqual(fastify.hasDecorator("regions"), true, "regions enums was decorated");
-	t.strictEqual(fastify.hasDecorator("classes"), true, "classes enums was decorated");
+	t.equal(fastify.hasDecorator("statuses"), true, "statuses enums was decorated");
+	t.equal(fastify.hasDecorator("regions"), true, "regions enums was decorated");
+	t.equal(fastify.hasDecorator("classes"), true, "classes enums was decorated");
 });

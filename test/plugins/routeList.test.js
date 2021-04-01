@@ -13,11 +13,11 @@ test("route list plugin", { only: true }, async t => {
 	fastify.get("/url", async () => "hello!");
 	await fastify.ready();
 
-	t.strictEqual(fastify.hasDecorator("routes"), true, "Decorated property was installed by plugin");
-	t.strictEqual(fastify.routes.length, 2, "Decorated property got proper length");
+	t.equal(fastify.hasDecorator("routes"), true, "Decorated property was installed by plugin");
+	t.equal(fastify.routes.length, 2, "Decorated property got proper length");
 
 	const urls = fastify.routes.map(e => e.url);
-	t.strictEqual(urls.includes("/"), true, "Decorated property contains test route 1");
-	t.strictEqual(urls.includes("/url"), true, "Decorated property contains test route 2");
+	t.equal(urls.includes("/"), true, "Decorated property contains test route 1");
+	t.equal(urls.includes("/url"), true, "Decorated property contains test route 2");
 
 });

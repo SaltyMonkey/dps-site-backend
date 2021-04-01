@@ -6,7 +6,8 @@ const playerSchema = new mongoose.Schema({
 	"playerClass": String, 
 	"playerName": String,
 	"playerId": Number,
-	"playerServerId" : Number
+	"playerServerId" : Number,
+	"playerServer": String
 });
 
 playerSchema.statics.getFromDbLinked = async function (serverId, playerId, playerClass) {
