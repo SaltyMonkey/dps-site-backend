@@ -1,14 +1,10 @@
 "use strict";
 
 const mongoose = require("mongoose");
-const { customAlphabet } = require("nanoid");
-
-const alphabet = "abcdefghijklmnopqrstuvwxyz123456789";
 
 const upload = new mongoose.Schema({
-	"id": {
+	"runId": {
 		"type": String,
-		"default": () => customAlphabet(alphabet, 25),
 		"unique": true
 	},
 	"encounterUnixEpoch": { "type": Number, "default": () => { Date.now(); } },
@@ -25,7 +21,7 @@ const upload = new mongoose.Schema({
 	"uploader": { "type": mongoose.Schema.Types.ObjectId, "ref": "player", "autopopulate": true },
 	"members": [
 		{
-			"id": { "type": mongoose.Schema.Types.ObjectId, "ref": "player", "autopopulate": true },
+			"userData": { "type": mongoose.Schema.Types.ObjectId, "ref": "player", "autopopulate": true },
 			"aggro": Number,
 			"playerAverageCritRate": Number,
 			"playerDeathDuration": String,
@@ -55,10 +51,10 @@ const upload = new mongoose.Schema({
 upload.plugin(require("mongoose-autopopulate"));
 
 const simplifiedView = {
-	"id": 1,
+	"runId": 1,
 	"huntingZoneId": 1,
 	"bossId": 1,
-	"uploadTime": 1,
+	"encounterUnixEpoch": 1,
 	"fightDuration": 1,
 	"isP2WConsums": 1,
 	"isMultipleTanks": 1,
@@ -66,20 +62,23 @@ const simplifiedView = {
 	"partyDps": 1,
 	"members.playerClass": 1,
 	"members.playerDps": 1,
+	"members.playerServerId": 1,
+	"members.playerId": 1,
+	"members.playerName": 1
 };
 
 upload.statics.getLatestRuns = async function (searchParams, amount) {
 	let runs = [];
-	runs = await upload.find(searchParams, simplifiedView).sort({ "$natural": -1 }).limit(amount).lean();
+	runs = await this.find(searchParams, simplifiedView).sort({ "$natural": -1 }).limit(amount).lean({ autopopulate: true });
 	return runs || [];
 };
 
 upload.statics.getCompleteRun = async function (id) {
-	return await upload.findOne({ id: id }).lean();
+	return await (this.findOne({ id: id })).lean({ autopopulate: true });
 };
 
 upload.statics.getTopRuns = async function (data, limit) {
-	return await upload.aggregate([
+	return await this.aggregate([
 		{
 			"$match": {
 				"region": data.region,
@@ -93,7 +92,7 @@ upload.statics.getTopRuns = async function (data, limit) {
 			}
 		}, {
 			"$project": {
-				"id": 1,
+				"runId": 1,
 				"huntingZoneId": 1,
 				"bossId": 1,
 				"encounterUnixEpoch ": 1,
@@ -101,7 +100,9 @@ upload.statics.getTopRuns = async function (data, limit) {
 				"isP2WConsums": 1,
 				"members.playerDps": 1,
 				"members.playerClass": 1,
-				"members.playerName": 1
+				"members.playerName": 1,
+				"members.playerId": 1,
+				"members.playerServerId": 1,
 			}
 		}, {
 			"$unwind": {
@@ -118,9 +119,9 @@ upload.statics.getTopRuns = async function (data, limit) {
 		.limit(limit);
 };
 
-upload.statics.getFromDbLinked = async function (id) {
+upload.statics.getFromDbLinked = async function (runId) {
 	return await this.findOne({
-		id: id.trim()
+		runId: runId.trim()
 	});
 };
 

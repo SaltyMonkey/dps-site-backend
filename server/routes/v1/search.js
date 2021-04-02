@@ -3,7 +3,6 @@
 const S = require("fluent-json-schema");
 const classes = require("../../enums/classes");
 const regions = require("../../enums/regions");
-
 /**
  * setup some routes
  * @param {import("fastify").FastifyInstance} fastify 
@@ -18,10 +17,10 @@ async function searchReq(fastify, options) {
 		.items(
 			S.object()
 				.additionalProperties(false)
-				.prop("id", S.string().required())
+				.prop("runId", S.string().required())
+				.prop("encounterUnixEpoch", S.string().required())
 				.prop("huntingZoneId", S.number().required())
 				.prop("bossId", S.number().required())
-				.prop("uploadTime", S.string().required())
 				.prop("fightDuration", S.string().required())
 				.prop("isP2WConsums", S.boolean().required())
 				.prop("isMultipleTanks", S.boolean().required())
@@ -32,6 +31,10 @@ async function searchReq(fastify, options) {
 						.additionalProperties(false)
 						.prop("playerClass", S.string().required())
 						.prop("playerDps", S.string().required())
+						.prop("playerName", S.string().required())
+						.prop("playerServerId", S.string().required())
+						.prop("playerId", S.string().required())
+
 				))
 
 		)
@@ -42,11 +45,11 @@ async function searchReq(fastify, options) {
 			.id("searchRecentPostRequestBody")
 			.description("All available parameters for search in recent requests")
 			.additionalProperties(false)
-			.prop("region", S.enum(regions))
+			.prop("region", S.string().enum(regions))
 			.prop("huntingZoneId", S.number())
 			.prop("bossId", S.number())
 			.prop("isShame", S.boolean())
-			.prop("playerClass", S.enum(Object.values(classes)))
+			.prop("playerClass", S.string().enum(Object.values(classes)))
 			.prop("excludeP2wConsums", S.boolean())
 		)
 			.valueOf(),
@@ -60,11 +63,11 @@ async function searchReq(fastify, options) {
 			.id("searchTopPostRequestBody")
 			.description("All available parameters to search in top runs")
 			.additionalProperties(false)
-			.prop("region", S.enum(regions).required())
+			.prop("region", S.string().enum(regions).required())
 			.prop("huntingZoneId", S.number().required())
 			.prop("bossId", S.number().required())
-			.prop("playerClass", S.enum(Object.values(classes)).required())
-			.prop("excludeP2wConsums", S.boolean().required())
+			.prop("playerClass", S.string().enum(Object.values(classes)).required())
+			.prop("excludeP2wConsums", S.boolean())
 		)
 			.valueOf(),
 		response: {
@@ -75,12 +78,13 @@ async function searchReq(fastify, options) {
 	const schemaFull = {
 		body: (S.object()
 			.additionalProperties(false)
-			.prop("id", S.string().required()))
+			.prop("runId", S.string().required()))
 			.valueOf(),
 		response: {
 			"2xx": (S.object()
 				.id("completeUploadDbResponse")
 				.additionalProperties(false)
+				.prop("runId", S.string().required())
 				.prop("bossId", S.number().required())
 				.prop("huntingZoneId", S.number().required())
 				.prop("region", S.string().required())
@@ -89,24 +93,12 @@ async function searchReq(fastify, options) {
 				.prop("partyDps", S.string().required())
 				.prop("isMultipleHeals", S.boolean().required())
 				.prop("isMultipleTanks", S.boolean().required())
-				.prop("debuffDetail", S.array().required().items(
-					S.object()
-						.additionalProperties(false)
-						.prop("key", S.number().required())
-						.prop("value", S.number().required())
-				))
+				.prop("debuffDetail", S.array().required())
 				.prop("isShame", S.boolean().required())
 				.prop("isP2WConsums", S.boolean().required())
-				.prop("uploader", S.object()
-					.additionalProperties(false)
-					.prop("playerClass", S.enum(Object.values(classes)).required())
-					.prop("playerName", S.string().required())
-					.prop("playerId", S.number().required())
-					.prop("playerServerId", S.number().required())
-				)
 				.prop("members", S.array().required().items(
 					S.object()
-						.prop("playerClass", S.enum(Object.values(classes)).required())
+						.prop("playerClass", S.string().enum(Object.values(classes)).required())
 						.prop("playerName", S.string().required())
 						.prop("playerId", S.number().required())
 						.prop("playerServerId", S.number().required())
@@ -117,25 +109,20 @@ async function searchReq(fastify, options) {
 						.prop("playerDps", S.string().required())
 						.prop("playerTotalDamage", S.string().required())
 						.prop("playerTotalDamagePercentage", S.number().required())
-						.prop("buffDetail", S.array().required().items(
-							S.object()
-								.additionalProperties(false)
-								.prop("key", S.number().required())
-								.prop("value", S.number().required())
-						))
+						.prop("buffDetail", S.array().required())
 						.prop("skillLog", S.array().required().items(
 							S.object()
 								.additionalProperties(false)
-								.prop("skillAverageCrit", S.string().required())
-								.prop("skillAverageWhite", S.string().required())
-								.prop("skillCritRate", S.number().required())
-								.prop("skillDamagePercent", S.number().required())
-								.prop("skillHighestCrit", S.string().required())
-								.prop("skillHits", S.string().required())
-								.prop("skillCasts", S.string().required())
+								.prop("skillAverageCrit", S.string())
+								.prop("skillAverageWhite", S.string())
+								.prop("skillCritRate", S.number())
+								.prop("skillDamagePercent", S.number())
+								.prop("skillHighestCrit", S.string())
+								.prop("skillHits", S.string())
+								.prop("skillCasts", S.string())
 								.prop("skillId", S.number().required())
-								.prop("skillLowestCrit", S.string().required())
-								.prop("skillTotalDamage", S.string().required())
+								.prop("skillLowestCrit", S.string())
+								.prop("skillTotalDamage", S.string())
 						))
 				))
 			)
@@ -150,7 +137,17 @@ async function searchReq(fastify, options) {
 			delete params.playerClass;
 		}
 
-		const [dbError, res] = await fastify.to(fastify.uploadModels.getLatestRuns(params, apiConfig.recentRunsAmount));
+		const [dbError, res] = await fastify.to(fastify.uploadModel.getLatestRuns(params, apiConfig.recentRunsAmount));
+
+		if (res) {
+			for (let j = 0; j < res.length; j++) {
+				const run = res[j];
+				for (let i = 0; i < run.members.length; i++) {
+					run.members[i] = { ...run.members[i], ...run.members[i].userData };
+				}
+			}
+		}
+
 		if (dbError) throw fastify.httpErrors.internalServerError("Internal database error");
 
 		return res;
@@ -163,15 +160,29 @@ async function searchReq(fastify, options) {
 			delete params.playerClass;
 		}
 
-		const [dbError, res] = await fastify.to(fastify.uploadModels.getTopRuns(params, apiConfig.topPlacesAmount));
+		const [dbError, res] = await fastify.to(fastify.uploadModel.getTopRuns(params, apiConfig.topPlacesAmount));
+
+		if (res) {
+			for (let j = 0; j < res.length; j++) {
+				const run = res[j];
+				for (let i = 0; i < run.members.length; i++) {
+					run.members[i] = { ...run.members[i], ...run.members[i].userData };
+				}
+			}
+		}
 		if (dbError) throw fastify.httpErrors.internalServerError("Internal database error");
 		return res;
 	});
 
 	fastify.post("/search/id", { prefix: options.prefix, config: options.config, schema: schemaFull }, async (req) => {
-		const [dbError, res] = await fastify.to(fastify.uploadModels.getCompleteRun(req.body.id));
+		const [dbError, res] = await fastify.to(fastify.uploadModel.getCompleteRun(req.body.id));
 		if (dbError) throw fastify.httpErrors.internalServerError("Internal database error");
 
+		if (res) {
+			for (let i = 0; i < res.members.length; i++) {
+				res.members[i] = { ...res.members[i], ...res.members[i].userData };
+			}
+		}
 		return res;
 	});
 }

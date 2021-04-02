@@ -5,7 +5,7 @@
 const fs = require("fs");
 const path = require("path");
 const conf = require("./server/server.json");
-const dpsData = require("./server/serverDpsDataApi.json");
+const dpsData = require("./server/dpsData.json");
 
 //!TODO: Remove dat simple hack (contact Gl0 for updated shinra logic)
 const convertWhitelistInObject = (whitelist) => {
@@ -62,7 +62,7 @@ fastify.register(require("./server/routes/apiList.js"));
 //init versioned api routes
 fastify.register(require("./server/routes/v1/whitelist.js"), { prefix: "/v1", whitelist: dpsData.whitelist });
 fastify.register(require("./server/routes/v1/search.js"), { prefix: "/v1", apiConfig: dpsData.apiConfig});
-fastify.register(require("./server/routes/v1/upload.js"), { prefix: "/v1", apiConfig: dpsData.apiConfig, whitelist: convertWhitelistInObject(dpsData.whitelist), analyze: dpsData.uploadAnalyze });
+fastify.register(require("./server/routes/v1/upload.js"), { prefix: "/v1", apiConfig: dpsData.apiConfig, regions: dpsData.regions, whitelist: convertWhitelistInObject(dpsData.whitelist), analyze: dpsData.uploadAnalyze });
 fastify.register(require("./server/routes/v1/control.js"), { prefix: "/v1", apiConfig: dpsData.apiConfig });
 
 const start = async () => {

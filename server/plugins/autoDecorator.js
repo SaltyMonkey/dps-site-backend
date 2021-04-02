@@ -22,7 +22,7 @@ async function autoDecorator(fastify, options) {
 		const filePath = path.join(folder, file);
 		if (!ignore.includes(file[0])) {
 			// eslint-disable-next-line global-require
-			fastify.decorate((file.toLowerCase()).replace(".js", ""), require(filePath));
+			fastify.decorate((file).replace(".js", ""), require(filePath));
 		}
 	});
 

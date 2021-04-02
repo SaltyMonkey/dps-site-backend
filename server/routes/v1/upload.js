@@ -2,9 +2,12 @@
 "use strict";
 
 const S = require("fluent-json-schema");
+const readable = require("readable-url");
 
 const NodeCache = require("node-cache");
 const classes = require("../../enums/classes");
+// eslint-disable-next-line node/no-unpublished-require
+const readableIdGenerator = new readable(true, 5, "");
 
 const arraysHasIntersect = (arr1, arr2) => {
 	for (const item of arr1)
@@ -28,12 +31,14 @@ async function uploadReq(fastify, options) {
 	const prefix = options.prefix;
 	const apiConfig = options.apiConfig;
 	const whitelist = options.whitelist;
+	const regions = options.regions;
 	const analyze = options.analyze;
 	const authHeader = options.apiConfig.authCheckHeader;
 
 	const uploadsCache = new NodeCache({ stdTTL: 60, checkperiod: 20, useClones: false });
 
 	const isPlacedInCache = (str) => uploadsCache.has(str);
+	const placeInCache = (str) => uploadsCache.set(str);
 
 	const schema = {
 		body: (S.object()
@@ -48,7 +53,7 @@ async function uploadReq(fastify, options) {
 			.prop("uploader", S.string().required())
 			.prop("members", S.array().required().items(
 				S.object()
-					.prop("playerClass", S.enum(Object.values(classes)).required())
+					.prop("playerClass", S.string().enum(Object.values(classes)).required())
 					.prop("playerName", S.string().minLength(3).required())
 					.prop("playerId", S.integer().minimum(1).required())
 					.prop("playerServerId", S.integer().required())
@@ -91,12 +96,13 @@ async function uploadReq(fastify, options) {
 	const prereqsCheck = (payload) => {
 		const currServerTimeSec = Date.now() / 1000;
 		const timeDataDiff = currServerTimeSec - payload.encounterUnixEpoch;
+
 		//allowed time diff 
 		if (timeDataDiff > apiConfig.maxAllowedTimeDiffSec || timeDataDiff < 0) return false;
-
+		
 		//allowed huntingZone and boss
 		const huntingZoneId = whitelist[payload.areaId];
-		if (!huntingZoneId || huntingZoneId && Array.isArray(huntingZoneId) && huntingZoneId.length > 0 && !huntingZoneId.includes(payload.bossId)) return false;
+		if (!huntingZoneId || (huntingZoneId && Array.isArray(huntingZoneId) && huntingZoneId.length > 0 && !huntingZoneId.includes(payload.bossId))) return false;
 
 		//compare party dps dps
 		const partyDps = BigInt(payload.partyDps);
@@ -104,11 +110,17 @@ async function uploadReq(fastify, options) {
 
 		//compare members amounts
 		if (payload.members.length < apiConfig.minMembersCount || payload.members.length > apiConfig.maxMembersCount) return false;
+
 		//check validity of uploader
-		if (payload.members.length > Number(payload.uploader)) return false;
+		if (Number(payload.uploader) > payload.members.length || Number(payload.uploader) < 0) return false;
 		
 		//check buffs and debuffs
-		//!TODO: finish check of buffs/debuffs
+		if (!Array.isArray(payload.debuffDetail) || (Array.isArray(payload.debuffDetail) && payload.debuffDetail.length === 0)) return false;
+
+		payload.members.forEach( member => {
+			if (!Array.isArray(member.buffDetail) || (Array.isArray(member.buffDetail) && member.buffDetail.length === 0)) return false;
+		});
+
 		return true;
 	};
 
@@ -116,30 +128,33 @@ async function uploadReq(fastify, options) {
 		let tanksCounter = 0;
 		let healersCounter = 0;
 		let deaths = 0;
-
+		let region = "";
 		payload.members.forEach(member => {
 			const pcls = member.playerClass;
 			deaths += member.playerDeaths;
 			if (pcls === classes.PRIEST || pcls === classes.MYSTIC)
 				healersCounter += 1;
 			else if (pcls === classes.BRAWLER || pcls === classes.WARRIOR || pcls === classes.BERS) {
-				const buffs = member.buffUptime.map(el => el.key);
+				const buffs = member.buffDetail.map(el => el[0]);
 
 				if (arraysHasIntersect(analyze.tankAbnormals, buffs)) tanksCounter += 1;
 			}
 			else if (pcls === classes.LANCER) tanksCounter += 1;
 		});
 
+		region = regions[payload.members[0].playerServer];
+		
 		return {
 			isShame: deaths >= analyze.isShameDeathsAmount,
 			isMultipleTanks: tanksCounter >= analyze.minMultipleTanksTriggerAmount,
 			isMultipleHeals: healersCounter >= analyze.minMultipleHealsTriggerAmount,
+			region: region
 		};
 	};
 
 	const updatePlayerOrAddAndReturfRef = async (playerRaw) => {
 		let ref = await fastify.playerModel.getFromDbLinked(playerRaw.playerServerId, playerRaw.playerId, playerRaw.playerClass);
-
+	
 		if (ref) {
 			if (ref.playerName !== playerRaw.playerName) {
 				ref.playerName = playerRaw.playerName;
@@ -164,7 +179,6 @@ async function uploadReq(fastify, options) {
 
 	// eslint-disable-next-line arrow-body-style
 	const isDuplicate = async (payload) => {
-		//!TODO: finish check of buffs/debuffs
 		//const res = await fastify.uploadModel.getFromDb({ payload:})
 		return false;
 	};
@@ -185,19 +199,21 @@ async function uploadReq(fastify, options) {
 		//basic validation of data
 		if (!prereqsCheck(req.body)) throw fastify.httpErrors.forbidden("Can't accept this upload");
 		//Fast check in cache by uniq string gathered in payload without accessing database
-		if (isPlacedInCache(generateUniqKey(req.body))) throw fastify.httpErrors.forbidden("Upload was already registered.");
+		if (isPlacedInCache(generateUniqKey(req.body))) 
+			throw fastify.httpErrors.forbidden("Upload was already registered.");
+		placeInCache(generateUniqKey(req.body));
 
 		const [dupDbError, dres] = await fastify.to(isDuplicate(req.body));
 		if (dres) throw fastify.httpErrors.forbidden("Upload was already registered.");
 		if (dupDbError) throw fastify.httpErrors.forbidden("Internal database error");
-
-		const [uploaderDbError, uploader] = await fastify.to(updatePlayerOrAddAndReturfRef(req.body.members[req.body.uploader]));
+		const [uploaderDbError, uploader] = await fastify.to(updatePlayerOrAddAndReturfRef(req.body.members[Number(req.body.uploader)]));
 		if (uploaderDbError) throw fastify.httpErrors.internalServerError("Internal database error");
-
+		
 		const analyzeRes = analyzePayload(req.body);
 		//create db view
 		let dbView = new fastify.uploadModel(req.body);
-		dbView.region = 
+		dbView.runId = readableIdGenerator.generate();
+		dbView.region = analyzeRes.region;
 		dbView.huntingZoneId = req.body.areaId;
 		dbView.uploader = uploader;
 		dbView.isShame = analyzeRes.isShame;
@@ -206,13 +222,15 @@ async function uploadReq(fastify, options) {
 
 		dbView.members = [];
 
-		req.body.members.forEach(async member => {
+		for (const member of req.body.members) {
 			const [memberDbError, ref] = await fastify.to(updatePlayerOrAddAndReturfRef(member));
 			if (memberDbError) throw fastify.httpErrors.internalServerError("Internal database error");
 			const obj = member;
-			obj.id = ref;
+			obj.userData = ref;
+			
 			dbView.members.push(obj);
-		});
+			
+		}
 
 		const [saveUploadDbError, res] = await fastify.to(dbView.save());
 		if (saveUploadDbError) throw fastify.httpErrors.internalServerError("Internal database error");

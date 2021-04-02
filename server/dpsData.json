@@ -1,0 +1,80 @@
+{
+	"apiConfig": {
+		"allowAnonymousUpload": true,
+		"maxAllowedTimeDiffSec": 420,
+		"maxDurationSec": 1800,
+		"topPlacesAmount": 150,
+		"recentRunsAmount": 50,
+		"minMembersCount": 3,
+		"maxMembersCount": 30,
+		"minPartyDps": "10000000",
+		"maxPartyDps": "250000000",
+		"maxBossHpDiffPerc": 20,
+		"authCheckHeader": "x-access-token"
+
+	},
+	"uploadAnalyze": {
+		"minMultipleTanksTriggerAmount": 2,
+		"minMultipleHealersTriggerAmount": 2,
+		"tankAbnormals": [],
+		"isShameDeathsAmount": 10
+	},
+	"whitelist": [
+		{
+			"AreaId":3206,
+			"BossIds":[1000],
+			"Hp":[38045347616],
+			"Size":5,
+			"Start":"2021-02",
+			"Name":"Crimsom KG"
+		  },
+		  {
+			"AreaId":3106,
+			"BossIds":[1000],
+			"Hp":[29133824751],
+			"Size":5,
+			"Start":"2021-02",
+			"Name":"KG"
+		  },
+		  {
+			"AreaId":3204,
+			"BossIds":[1000],
+			"Hp":[42843859929],
+			"Size":5,
+			"Start":"2021-01",
+			"Name":"Catalepticon HM"
+		  },
+		  {
+			"AreaId":3104,
+			"BossIds":[1000],
+			"Hp":[25240851827],
+			"Size":5,
+			"Start":"2021-01",
+			"Name":"Catalepticon NM"
+		  },
+		  {
+			"AreaId":970,
+			"BossIds":[3000],
+			"Hp":[41313536000],
+			"Size":5,
+			"Start":"2021-01",
+			"Name":"RMHM"
+		  },
+		  {
+			"AreaId":770,
+			"BossIds":[3000],
+			"Hp":[5202000000],
+			"Size":5,
+			"Name":"RMNM"
+		  }
+	],
+	"regions": {
+		"Mystel": "eu",
+		"Yurian": "eu",
+		"Seren": "eu",
+		"Shakan": "ru",
+		"Velik": "na",
+		"Kaia": "na"
+	}
+
+}

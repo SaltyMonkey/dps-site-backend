@@ -38,7 +38,7 @@ async function controlReq(fastify, options) {
 		body: (
 			S.object()
 				.additionalProperties(false)
-				.prop("uploadId", S.string().minLength(20).maxLength(50).required())
+				.prop("runId", S.string().minLength(20).maxLength(50).required())
 		)
 			.valueOf(),
 		headers: headersSchema,
@@ -48,9 +48,7 @@ async function controlReq(fastify, options) {
 	};
 
 	const isRoleAdmin = async (token) => {
-		const dbLink = await fastify.apiModel.getFromDb({
-			token: token.trim()
-		});
+		const dbLink = await fastify.apiModel.getFromDb(token);
 
 		if (!dbLink) return false;
 
@@ -69,8 +67,7 @@ async function controlReq(fastify, options) {
 		let deleteCheckDbStatus = false;
 
 		[adminCheckDbStatus, isAdmin] = await fastify.to(isRoleAdmin(req.headers[authHeader]));
-		[uploadCheckDbAccess, uploadData] = await fastify.to(fastify.uploadModel.getFromDbLinked(req.body["id"]));
-
+		[uploadCheckDbAccess, uploadData] = await fastify.to(fastify.uploadModel.getFromDbLinked(req.body["runId"]));
 		if (adminCheckDbStatus || uploadCheckDbAccess) throw fastify.httpErrors.internalServerError("Internal database error");
 		if (!isAdmin || !uploadData) throw fastify.httpErrors.forbidden("Access denied!");
 
@@ -91,7 +88,6 @@ async function controlReq(fastify, options) {
 
 		[adminCheckDbStatus, isAdmin] = await fastify.to(isRoleAdmin(req.headers[authHeader]));
 		[apiCheckDbAccess, isApiKeyExists] = await fastify.to(fastify.apiModel.getFromDb(req.body[apiKeyName]));
-
 		if (adminCheckDbStatus || apiCheckDbAccess) throw fastify.httpErrors.internalServerError("Internal database error");
 		if (!isAdmin || isApiKeyExists) throw fastify.httpErrors.forbidden("Access denied!");
 

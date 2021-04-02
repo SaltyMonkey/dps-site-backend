@@ -10,7 +10,7 @@ const apis = new mongoose.Schema({
 
 apis.statics.getFromDb = async function (token) {
 	return await this.findOne({
-		token: token.trim()
+		token: token
 	}, { "_id": 1, "role": 1 }).lean();
 };
 

@@ -14,7 +14,7 @@ playerSchema.statics.getFromDbLinked = async function (serverId, playerId, playe
 	return await this.findOne({
 		playerId: playerId,
 		playerServerId: serverId,
-		playerClass: playerClass.trim()
+		playerClass: playerClass
 	});
 };
 
