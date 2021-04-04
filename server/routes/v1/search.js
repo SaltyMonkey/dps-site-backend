@@ -18,11 +18,11 @@ async function searchReq(fastify, options) {
 			S.object()
 				.additionalProperties(false)
 				.prop("runId", S.string().required())
-				.prop("encounterUnixEpoch", S.string().required())
-				.prop("huntingZoneId", S.number().required())
-				.prop("bossId", S.number().required())
+				.prop("encounterUnixEpoch", S.integer().required())
+				.prop("huntingZoneId", S.integer().required())
+				.prop("bossId", S.integer().required())
 				.prop("fightDuration", S.string().required())
-				.prop("isP2WConsums", S.boolean().required())
+				.prop("isP2WConsums", S.boolean())
 				.prop("isMultipleTanks", S.boolean().required())
 				.prop("isMultipleHeals", S.boolean().required())
 				.prop("partyDps", S.string().required())
@@ -32,11 +32,10 @@ async function searchReq(fastify, options) {
 						.prop("playerClass", S.string().required())
 						.prop("playerDps", S.string().required())
 						.prop("playerName", S.string().required())
-						.prop("playerServerId", S.string().required())
-						.prop("playerId", S.string().required())
-
+						.prop("playerServer", S.string().required())
+						.prop("playerServerId", S.integer().required())
+						.prop("playerId", S.integer().required())
 				))
-
 		)
 		.valueOf();
 
@@ -45,12 +44,18 @@ async function searchReq(fastify, options) {
 			.id("searchRecentPostRequestBody")
 			.description("All available parameters for search in recent requests")
 			.additionalProperties(false)
-			.prop("region", S.string().enum(regions))
-			.prop("huntingZoneId", S.number())
-			.prop("bossId", S.number())
+			.prop("region", S.string().enum(regions).required())
+			.prop("huntingZoneId", S.integer())
+			.prop("bossId", S.integer())
 			.prop("isShame", S.boolean())
 			.prop("playerClass", S.string().enum(Object.values(classes)))
-			.prop("excludeP2wConsums", S.boolean())
+			.prop("isP2WConsums", S.boolean())
+			.prop("isMultipleHeals", S.boolean())
+			.prop("isMultipleTanks", S.boolean())
+			.prop("playerId", S.integer())
+			.prop("playerServerId", S.integer())
+			.prop("playerServer", S.string())
+			.prop("playerName", S.string())
 		)
 			.valueOf(),
 		response: {
@@ -66,8 +71,11 @@ async function searchReq(fastify, options) {
 			.prop("region", S.string().enum(regions).required())
 			.prop("huntingZoneId", S.number().required())
 			.prop("bossId", S.number().required())
-			.prop("playerClass", S.string().enum(Object.values(classes)).required())
-			.prop("excludeP2wConsums", S.boolean())
+			.prop("playerClass", S.string().enum(Object.values(classes)))
+			.prop("playerServer", S.string())
+			.prop("isP2WConsums", S.boolean())
+			.prop("isMultipleHeals", S.boolean())
+			.prop("isMultipleTanks", S.boolean())			
 		)
 			.valueOf(),
 		response: {
@@ -85,27 +93,28 @@ async function searchReq(fastify, options) {
 				.id("completeUploadDbResponse")
 				.additionalProperties(false)
 				.prop("runId", S.string().required())
-				.prop("bossId", S.number().required())
-				.prop("huntingZoneId", S.number().required())
+				.prop("bossId", S.integer().required())
+				.prop("huntingZoneId", S.integer().required())
 				.prop("region", S.string().required())
-				.prop("encounterUnixEpoch", S.number().required())
+				.prop("encounterUnixEpoch", S.integer().required())
 				.prop("fightDuration", S.string().required())
 				.prop("partyDps", S.string().required())
 				.prop("isMultipleHeals", S.boolean().required())
 				.prop("isMultipleTanks", S.boolean().required())
 				.prop("debuffDetail", S.array().required())
 				.prop("isShame", S.boolean().required())
-				.prop("isP2WConsums", S.boolean().required())
+				.prop("isP2WConsums", S.boolean())
 				.prop("members", S.array().required().items(
 					S.object()
 						.prop("playerClass", S.string().enum(Object.values(classes)).required())
 						.prop("playerName", S.string().required())
-						.prop("playerId", S.number().required())
-						.prop("playerServerId", S.number().required())
+						.prop("playerServer", S.string().required())
+						.prop("playerId", S.integer().required())
+						.prop("playerServerId", S.integer().required())
 						.prop("aggro", S.number().required())
 						.prop("playerAverageCritRate", S.number().required())
 						.prop("playerDeathDuration", S.string().required())
-						.prop("playerDeaths", S.number().required())
+						.prop("playerDeaths", S.integer().required())
 						.prop("playerDps", S.string().required())
 						.prop("playerTotalDamage", S.string().required())
 						.prop("playerTotalDamagePercentage", S.number().required())
@@ -120,9 +129,10 @@ async function searchReq(fastify, options) {
 								.prop("skillHighestCrit", S.string())
 								.prop("skillHits", S.string())
 								.prop("skillCasts", S.string())
-								.prop("skillId", S.number().required())
+								.prop("skillId", S.integer().required())
 								.prop("skillLowestCrit", S.string())
 								.prop("skillTotalDamage", S.string())
+								.prop("skillTotalCritDamage", S.string())
 						))
 				))
 			)
@@ -132,12 +142,28 @@ async function searchReq(fastify, options) {
 
 	fastify.post("/search/recent", { prefix: options.prefix, config: options.config, schema: schemaRecent }, async (req) => {
 		let params = { ...req.body };
-		if (params.playerClass) {
-			params["members.playerClass"] = params.playerClass;
-			delete params.playerClass;
+		if (params.playerClass || params.playerServer || params.playerName || params.playerServerId || params.playerName) { 
+			params.members = { "$exactMatch": { }};
+			if(params.playerClass) {
+				params.members["$exactMatch"]["playerClass"] = params.playerClass;
+				delete params.playerClass;
+			}
+			if (params.playerServer) {
+				params.members["$exactMatch"]["playerServer"] = params.playerServer;
+				delete params.playerServer;
+			}
+			if (params.playerServerId) {
+				params.members["$exactMatch"]["playerServerId"] = params.playerServerId;
+				delete params.playerServerId;
+			}
+			if (params.playerName) {
+				params.members["$exactMatch"]["playerName"] = params.playerName;
+				delete params.playerName;
+			}
 		}
 
 		const [dbError, res] = await fastify.to(fastify.uploadModel.getLatestRuns(params, apiConfig.recentRunsAmount));
+		if (dbError) throw fastify.httpErrors.internalServerError("Internal database error");
 
 		if (res) {
 			for (let j = 0; j < res.length; j++) {
@@ -147,20 +173,26 @@ async function searchReq(fastify, options) {
 				}
 			}
 		}
-
-		if (dbError) throw fastify.httpErrors.internalServerError("Internal database error");
 
 		return res;
 	});
 
 	fastify.post("/search/top", { prefix: options.prefix, config: options.config, schema: schemaByTop }, async (req) => {
 		let params = { ...req.body };
-		if (params.playerClass) {
-			params["members.playerClass"] = params.playerClass;
-			delete params.playerClass;
+		if (params.playerClass || params.playerServer) {
+			params.members = { "$exactMatch": { }};
+			if (params.playerServer) {
+				params.members["$exactMatch"]["playerServer"] = params.playerServer;
+				delete params.playerServer;
+			}
+			if(params.playerClass) {
+				params.members["$exactMatch"]["playerClass"] = params.playerClass;
+				delete params.playerClass;
+			}
 		}
-
+		
 		const [dbError, res] = await fastify.to(fastify.uploadModel.getTopRuns(params, apiConfig.topPlacesAmount));
+		if (dbError) throw fastify.httpErrors.internalServerError("Internal database error");
 
 		if (res) {
 			for (let j = 0; j < res.length; j++) {
@@ -170,14 +202,14 @@ async function searchReq(fastify, options) {
 				}
 			}
 		}
-		if (dbError) throw fastify.httpErrors.internalServerError("Internal database error");
+
 		return res;
 	});
 
 	fastify.post("/search/id", { prefix: options.prefix, config: options.config, schema: schemaFull }, async (req) => {
-		const [dbError, res] = await fastify.to(fastify.uploadModel.getCompleteRun(req.body.id));
+		const [dbError, res] = await fastify.to(fastify.uploadModel.getCompleteRun(req.body.runId));
 		if (dbError) throw fastify.httpErrors.internalServerError("Internal database error");
-
+		if(!res) throw fastify.httpErrors.notFound("");
 		if (res) {
 			for (let i = 0; i < res.members.length; i++) {
 				res.members[i] = { ...res.members[i], ...res.members[i].userData };

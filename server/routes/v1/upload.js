@@ -79,6 +79,7 @@ async function uploadReq(fastify, options) {
 							.prop("skillId", S.integer().required())
 							.prop("skillLowestCrit", S.string())
 							.prop("skillTotalDamage", S.string())
+							.prop("skillTotalCritDamage", S.string())
 					))
 			))
 		)
@@ -148,6 +149,7 @@ async function uploadReq(fastify, options) {
 			isShame: deaths >= analyze.isShameDeathsAmount,
 			isMultipleTanks: tanksCounter >= analyze.minMultipleTanksTriggerAmount,
 			isMultipleHeals: healersCounter >= analyze.minMultipleHealsTriggerAmount,
+			isP2WConsums: false,
 			region: region
 		};
 	};
@@ -227,9 +229,7 @@ async function uploadReq(fastify, options) {
 			if (memberDbError) throw fastify.httpErrors.internalServerError("Internal database error");
 			const obj = member;
 			obj.userData = ref;
-			
 			dbView.members.push(obj);
-			
 		}
 
 		const [saveUploadDbError, res] = await fastify.to(dbView.save());

@@ -7,7 +7,7 @@ const upload = new mongoose.Schema({
 		"type": String,
 		"unique": true
 	},
-	"encounterUnixEpoch": { "type": Number, "default": () => { Date.now(); } },
+	"encounterUnixEpoch": Number,
 	"region": String,
 	"bossId": Number,
 	"huntingZoneId": Number,
@@ -41,7 +41,8 @@ const upload = new mongoose.Schema({
 					"skillCasts": String,
 					"skillId": Number,
 					"skillLowestCrit": String,
-					"skillTotalDamage": String
+					"skillTotalDamage": String,
+					"skillTotalCritDamage": String
 				}
 			]
 		}
@@ -62,6 +63,7 @@ const simplifiedView = {
 	"partyDps": 1,
 	"members.playerClass": 1,
 	"members.playerDps": 1,
+	"members.playerServer": 1,
 	"members.playerServerId": 1,
 	"members.playerId": 1,
 	"members.playerName": 1
@@ -69,12 +71,12 @@ const simplifiedView = {
 
 upload.statics.getLatestRuns = async function (searchParams, amount) {
 	let runs = [];
-	runs = await this.find(searchParams, simplifiedView).sort({ "$natural": -1 }).limit(amount).lean({ autopopulate: true });
+	runs = await this.find(searchParams, simplifiedView).sort({ "encounterUnixEpoch": -1 }).limit(amount).lean({ autopopulate: true });
 	return runs || [];
 };
 
 upload.statics.getCompleteRun = async function (id) {
-	return await (this.findOne({ id: id })).lean({ autopopulate: true });
+	return await (this.findOne({ runId: id })).lean({ autopopulate: true });
 };
 
 upload.statics.getTopRuns = async function (data, limit) {
@@ -84,26 +86,14 @@ upload.statics.getTopRuns = async function (data, limit) {
 				"region": data.region,
 				"bossId": data.bossId,
 				"huntingZoneId": data.huntingZoneId,
-				"members.playerClass": data.class,
+				"members": data.members,
 				"isP2WConsums": !data.excludeP2wConsums,
-				"isMultipleHeals": false,
-				"isMultipleTanks": false,
+				"isMultipleHeals": data.isMultipleHeals,
+				"isMultipleTanks": data.isMultipleTanks,
 				"isShame": false
 			}
 		}, {
-			"$project": {
-				"runId": 1,
-				"huntingZoneId": 1,
-				"bossId": 1,
-				"encounterUnixEpoch ": 1,
-				"fightDuration": 1,
-				"isP2WConsums": 1,
-				"members.playerDps": 1,
-				"members.playerClass": 1,
-				"members.playerName": 1,
-				"members.playerId": 1,
-				"members.playerServerId": 1,
-			}
+			"$project": simplifiedView
 		}, {
 			"$unwind": {
 				"path": "$members"
