@@ -3,6 +3,8 @@
 const S = require("fluent-json-schema");
 const classes = require("../../enums/classes");
 const regions = require("../../enums/regions");
+const time = require("../../enums/time");
+
 /**
  * setup some routes
  * @param {import("fastify").FastifyInstance} fastify 
@@ -71,8 +73,9 @@ async function searchReq(fastify, options) {
 			.prop("region", S.string().enum(regions).required())
 			.prop("huntingZoneId", S.number().required())
 			.prop("bossId", S.number().required())
-			.prop("playerClass", S.string().enum(Object.values(classes)))
+			.prop("playerClass", S.string().enum(Object.values(classes)).required())
 			.prop("playerServer", S.string())
+			.prop("timeRange", S.string().enum(Object.values(time)).required())
 			.prop("isP2WConsums", S.boolean())
 			.prop("isMultipleHeals", S.boolean())
 			.prop("isMultipleTanks", S.boolean())			
@@ -143,21 +146,21 @@ async function searchReq(fastify, options) {
 	fastify.post("/search/recent", { prefix: options.prefix, config: options.config, schema: schemaRecent }, async (req) => {
 		let params = { ...req.body };
 		if (params.playerClass || params.playerServer || params.playerName || params.playerServerId || params.playerName) { 
-			params.members = { "$exactMatch": { }};
+			params["members.userData"] = { "$elemMatch": { }};
 			if(params.playerClass) {
-				params.members["$exactMatch"]["playerClass"] = params.playerClass;
+				params["members.userData"]["$elemMatch"]["playerClass"] = params.playerClass;
 				delete params.playerClass;
 			}
 			if (params.playerServer) {
-				params.members["$exactMatch"]["playerServer"] = params.playerServer;
+				params["members.userData"]["$elemMatch"]["playerServer"] = params.playerServer;
 				delete params.playerServer;
 			}
 			if (params.playerServerId) {
-				params.members["$exactMatch"]["playerServerId"] = params.playerServerId;
+				params["members.userData"]["$elemMatch"]["playerServerId"] = params.playerServerId;
 				delete params.playerServerId;
 			}
 			if (params.playerName) {
-				params.members["$exactMatch"]["playerName"] = params.playerName;
+				params["members.userData"]["$elemMatch"]["playerName"] = params.playerName;
 				delete params.playerName;
 			}
 		}
@@ -180,18 +183,19 @@ async function searchReq(fastify, options) {
 	fastify.post("/search/top", { prefix: options.prefix, config: options.config, schema: schemaByTop }, async (req) => {
 		let params = { ...req.body };
 		if (params.playerClass || params.playerServer) {
-			params.members = { "$exactMatch": { }};
+			params.members = { "$elemMatch": { }};
 			if (params.playerServer) {
-				params.members["$exactMatch"]["playerServer"] = params.playerServer;
+				params.members["$elemMatch"]["playerServer"] = params.playerServer;
 				delete params.playerServer;
 			}
 			if(params.playerClass) {
-				params.members["$exactMatch"]["playerClass"] = params.playerClass;
+				params.members["$elemMatch"]["playerClass"] = params.playerClass;
 				delete params.playerClass;
 			}
 		}
 		
 		const [dbError, res] = await fastify.to(fastify.uploadModel.getTopRuns(params, apiConfig.topPlacesAmount));
+		console.log(dbError);
 		if (dbError) throw fastify.httpErrors.internalServerError("Internal database error");
 
 		if (res) {

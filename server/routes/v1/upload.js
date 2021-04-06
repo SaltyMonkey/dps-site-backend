@@ -99,7 +99,7 @@ async function uploadReq(fastify, options) {
 		const timeDataDiff = currServerTimeSec - payload.encounterUnixEpoch;
 
 		//allowed time diff 
-		if (timeDataDiff > apiConfig.maxAllowedTimeDiffSec || timeDataDiff < 0) return false;
+		//if (timeDataDiff > apiConfig.maxAllowedTimeDiffSec || timeDataDiff < 0) return false;
 		
 		//allowed huntingZone and boss
 		const huntingZoneId = whitelist[payload.areaId];
@@ -221,6 +221,7 @@ async function uploadReq(fastify, options) {
 		dbView.isShame = analyzeRes.isShame;
 		dbView.isMultipleTanks = analyzeRes.isMultipleTanks;
 		dbView.isMultipleHeals = analyzeRes.isMultipleHeals;
+		dbView.isP2WConsums = analyzeRes.isP2WConsums;
 
 		dbView.members = [];
 

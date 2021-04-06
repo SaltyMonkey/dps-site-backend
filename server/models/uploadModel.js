@@ -70,8 +70,10 @@ const simplifiedView = {
 };
 
 upload.statics.getLatestRuns = async function (searchParams, amount) {
+	console.log(searchParams)
 	let runs = [];
 	runs = await this.find(searchParams, simplifiedView).sort({ "encounterUnixEpoch": -1 }).limit(amount).lean({ autopopulate: true });
+	console.log(runs);
 	return runs || [];
 };
 

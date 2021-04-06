@@ -10,7 +10,7 @@ const classes = Object.freeze({
 	NINJA: "Ninja",
 	REAPER: "Reaper",
 	SLAYER: "Slayer",
-	VALK: "Valkirye",
+	VALK: "Valkyrie",
 	BRAWLER: "Brawler",
 	BERS: "Berserker"
 });
