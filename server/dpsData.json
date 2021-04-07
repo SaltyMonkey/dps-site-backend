@@ -15,7 +15,21 @@
 	"uploadAnalyze": {
 		"minMultipleTanksTriggerAmount": 2,
 		"minMultipleHealersTriggerAmount": 2,
-		"tankAbnormals": [],
+		"tankAbnormals": [10153561, 10200, 10201, 401400],
+		"roleType": {
+			"Brawler": {
+				"abns": [[10153561], 2],
+				"default": 1
+			},
+			"Warrior": {
+				"abns": [[10200, 10201], 1],
+				"default": 2
+			},
+			"Berserker": {
+				"abns": [[401400], 1],
+				"default": 2
+			}
+		},
 		"isShameDeathsAmount": 10
 	},
 	"whitelist": [

@@ -3,7 +3,9 @@
 const S = require("fluent-json-schema");
 const classes = require("../../enums/classes");
 const regions = require("../../enums/regions");
+const roles = require("../../enums/classRoles");
 const time = require("../../enums/time");
+const luxon = require("luxon");
 
 /**
  * setup some routes
@@ -50,7 +52,9 @@ async function searchReq(fastify, options) {
 			.prop("huntingZoneId", S.integer())
 			.prop("bossId", S.integer())
 			.prop("isShame", S.boolean())
+			.prop("timeRange", S.string().enum(Object.values(time)).required())
 			.prop("playerClass", S.string().enum(Object.values(classes)))
+			.prop("roleType", S.string().enum(Object.values(roles)))
 			.prop("isP2WConsums", S.boolean())
 			.prop("isMultipleHeals", S.boolean())
 			.prop("isMultipleTanks", S.boolean())
@@ -76,6 +80,7 @@ async function searchReq(fastify, options) {
 			.prop("playerClass", S.string().enum(Object.values(classes)).required())
 			.prop("playerServer", S.string())
 			.prop("timeRange", S.string().enum(Object.values(time)).required())
+			.prop("roleType", S.string().enum(Object.values(roles)))
 			.prop("isP2WConsums", S.boolean())
 			.prop("isMultipleHeals", S.boolean())
 			.prop("isMultipleTanks", S.boolean())			
@@ -143,8 +148,30 @@ async function searchReq(fastify, options) {
 		}
 	};
 
+	const timeRangeConvert = (timeRange) => {
+		let timeSelector = {};
+		// eslint-disable-next-line default-case
+		switch(timeRange) {
+		case(time.DAY):
+			timeSelector = { $gte: luxon.DateTime.local().startOf("day").toUTC().toSeconds() };
+			break;
+		case(time.WEEK):
+			timeSelector = { $gte: luxon.DateTime.local().startOf("week").toUTC().toSeconds() };
+			break;
+		case(time.MONTH):
+			timeSelector = { $gte: luxon.DateTime.local().startOf("month").toUTC().toSeconds() };
+			break;
+		}
+
+		return timeSelector;
+	};
+
 	fastify.post("/search/recent", { prefix: options.prefix, config: options.config, schema: schemaRecent }, async (req) => {
 		let params = { ...req.body };
+
+		params.encounterUnixEpoch = timeRangeConvert(params.timeRange);
+		delete params.timeRange;
+
 		if (params.playerClass || params.playerServer || params.playerName || params.playerServerId || params.playerName) { 
 			params["members.userData"] = { "$elemMatch": { }};
 			if(params.playerClass) {
@@ -182,6 +209,10 @@ async function searchReq(fastify, options) {
 
 	fastify.post("/search/top", { prefix: options.prefix, config: options.config, schema: schemaByTop }, async (req) => {
 		let params = { ...req.body };
+
+		params.encounterUnixEpoch = timeRangeConvert(params.timeRange);
+		delete params.timeRange;
+
 		if (params.playerClass || params.playerServer) {
 			params.members = { "$elemMatch": { }};
 			if (params.playerServer) {

@@ -154,6 +154,48 @@ async function uploadReq(fastify, options) {
 		};
 	};
 
+	const modifyMembersArray = (members) => {
+		let membersArray = [];
+
+		members.forEach(item => {
+			const cls = item.playerClass;
+			const buffs = item.buffDetail.map(el => el[0]);
+			if(cls === classes.BRAWLER) {
+				let newObj = {...item};
+				let res = arraysHasIntersect(analyze.roleType.Brawler.abns[0], buffs);
+				if(res)
+					newObj.roleType = analyze.roleType.Brawler.abns[1];
+				else
+					newObj.roleType = analyze.roleType.Brawler.default;
+				membersArray.push(newObj);
+			}
+			else if(cls === classes.WARRIOR) {
+				let newObj = {...item};
+				let res = arraysHasIntersect(analyze.roleType.Warrior.abns[0], buffs);
+				if(res)
+					newObj.roleType = analyze.roleType.Warrior.abns[1];
+				else
+					newObj.roleType = analyze.roleType.Warrior.default;
+				membersArray.push(newObj);
+			}
+			else if(cls === classes.BERS) {
+				let newObj = {...item};
+				let res = arraysHasIntersect(analyze.roleType.Berserker.abns[0], buffs);
+				if(res)
+					newObj.roleType = analyze.roleType.Berserker.abns[1];
+				else
+					newObj.roleType = analyze.roleType.Berserker.default;
+				membersArray.push(newObj);
+			}
+			else {
+				membersArray.push(item);
+			}
+		});
+
+		return membersArray;
+	};
+
+
 	const updatePlayerOrAddAndReturfRef = async (playerRaw) => {
 		let ref = await fastify.playerModel.getFromDbLinked(playerRaw.playerServerId, playerRaw.playerId, playerRaw.playerClass);
 	
@@ -225,7 +267,9 @@ async function uploadReq(fastify, options) {
 
 		dbView.members = [];
 
-		for (const member of req.body.members) {
+		const modifiedMembers = modifyMembersArray(req.body.members);
+
+		for (const member of modifiedMembers) {
 			const [memberDbError, ref] = await fastify.to(updatePlayerOrAddAndReturfRef(member));
 			if (memberDbError) throw fastify.httpErrors.internalServerError("Internal database error");
 			const obj = member;
