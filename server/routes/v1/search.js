@@ -80,14 +80,22 @@ async function searchReq(fastify, options) {
 			.prop("playerClass", S.string().enum(Object.values(classes)).required())
 			.prop("playerServer", S.string())
 			.prop("timeRange", S.string().enum(Object.values(time)).required())
-			.prop("roleType", S.string().enum(Object.values(roles)))
-			.prop("isP2WConsums", S.boolean())
-			.prop("isMultipleHeals", S.boolean())
-			.prop("isMultipleTanks", S.boolean())			
+			.prop("roleType", S.string().enum(Object.values(roles)))		
 		)
 			.valueOf(),
 		response: {
-			"2xx": responseSchema
+			"2xx": S.array()
+				.id("searchTopResponse2xx")
+				.items(
+					S.object()
+						.additionalProperties(false)
+						.prop("runId", S.string().required())
+						.prop("fightDuration", S.string().required())
+						.prop("playerClass", S.string().required())
+						.prop("playerDps", S.string().required())
+						.prop("playerName", S.string().required())
+				)
+				.valueOf()
 		}
 	};
 
@@ -212,31 +220,10 @@ async function searchReq(fastify, options) {
 
 		params.encounterUnixEpoch = timeRangeConvert(params.timeRange);
 		delete params.timeRange;
-
-		if (params.playerClass || params.playerServer) {
-			params.members = { "$elemMatch": { }};
-			if (params.playerServer) {
-				params.members["$elemMatch"]["playerServer"] = params.playerServer;
-				delete params.playerServer;
-			}
-			if(params.playerClass) {
-				params.members["$elemMatch"]["playerClass"] = params.playerClass;
-				delete params.playerClass;
-			}
-		}
 		
 		const [dbError, res] = await fastify.to(fastify.uploadModel.getTopRuns(params, apiConfig.topPlacesAmount));
 		console.log(dbError);
 		if (dbError) throw fastify.httpErrors.internalServerError("Internal database error");
-
-		if (res) {
-			for (let j = 0; j < res.length; j++) {
-				const run = res[j];
-				for (let i = 0; i < run.members.length; i++) {
-					run.members[i] = { ...run.members[i], ...run.members[i].userData };
-				}
-			}
-		}
 
 		return res;
 	});

@@ -16,7 +16,7 @@ async function whitelistReq(fastify, options) {
 			"2xx": S.array().items(
 				S.object()
 					.additionalProperties(false)
-					.prop("huntingZoneId", S.number().required())
+					.prop("AreaId", S.number().required())
 					.prop("BossIds", S.array().items(S.number()).required())
 			)
 				.valueOf()

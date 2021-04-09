@@ -82,33 +82,88 @@ upload.statics.getCompleteRun = async function (id) {
 };
 
 upload.statics.getTopRuns = async function (data, limit) {
-	return await this.aggregate([
-		{
-			"$match": {
-				"region": data.region,
-				"bossId": data.bossId,
-				"huntingZoneId": data.huntingZoneId,
-				"members": data.members,
-				"isP2WConsums": !data.excludeP2wConsums,
-				"isMultipleHeals": data.isMultipleHeals,
-				"isMultipleTanks": data.isMultipleTanks,
-				"isShame": false
-			}
-		}, {
-			"$project": simplifiedView
-		}, {
-			"$unwind": {
-				"path": "$members"
-			}
-		}, {
-			"$match": {
-				"members.playerClass": data.playerClass
-			}
+	let matchStage = {
+		"$match": {
+			"region": data.region,
+			"bossId": data.bossId,
+			"huntingZoneId": data.huntingZoneId,
+			"encounterUnixEpoch": data.encounterUnixEpoch,
+			"isP2WConsums": false,
+			"isMultipleHeals": false,
+			"isMultipleTanks": false,
+			"isShame": false
 		}
-	])
-		.collation({ locale: "en_US", numericOrdering: true })
-		.sort({ "members.playerDps": -1 })
-		.limit(limit);
+	};
+	if(data.roleType) {
+		matchStage["$match"]["roleType"] = data.roleType;
+	}
+
+	return await this.aggregate(
+		[
+			{
+				"$project": {
+					"region": 1,
+					"runId": 1,
+					"bossId": 1,
+					"huntingZoneId": 1,
+					"encounterUnixEpoch": 1,
+					"fightDuration": 1,
+					"isP2WConsums": 1,
+					"isMultipleHeals": 1,
+					"isMultipleTanks": 1,
+					"isShame": 1,
+					"members.userData": 1,
+					"members.playerDps": 1,
+					"members.roleType": 1
+				}
+			}, 
+			matchStage,
+			{
+				"$unwind": {
+					"path": "$members"
+				}
+			}, {
+				"$lookup": {
+					"from": "players",
+					"localField": "members.userData",
+					"foreignField": "_id",
+					"as": "player"
+				}
+			}, {
+				"$project": {
+					"runId": 1,
+					"playerName": {
+						"$arrayElemAt": [
+							"$player.playerName", 0
+						]
+					},
+					"playerClass": {
+						"$arrayElemAt": [
+							"$player.playerClass", 0
+						]
+					},
+					"playerServer": {
+						"$arrayElemAt": [
+							"$player.playerServer", 0
+						]
+					},
+					"playerDps": "$members.playerDps"
+				}
+			}, {
+				"$match": {
+					"playerClass": data.playerClass,
+					"playerServer": data.playerServer
+				}
+			}, {
+				"$sort": {
+					"playerDps": -1
+				}
+			}, {
+				"$limit": limit
+			}
+		],
+		{ colation: { locale: "en_US", numericOrdering: true } }
+	);
 };
 
 upload.statics.getFromDbLinked = async function (runId) {
