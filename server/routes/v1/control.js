@@ -5,7 +5,7 @@ const status = require("../../enums/statuses");
 const role = require("../../enums/roles");
 
 /**
- * setup some routes
+ * Control routes
  * @param {import("fastify").FastifyInstance} fastify 
  * @param {*} options 
  */

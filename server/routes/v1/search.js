@@ -8,7 +8,7 @@ const time = require("../../enums/time");
 const luxon = require("luxon");
 
 /**
- * setup some routes
+ * Search routes
  * @param {import("fastify").FastifyInstance} fastify 
  * @param {*} options 
  */

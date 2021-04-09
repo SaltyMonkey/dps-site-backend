@@ -18,7 +18,7 @@ const upload = new mongoose.Schema({
 	"debuffDetail": [],
 	"isShame": Boolean,
 	"isP2WConsums": Boolean,
-	"uploader": { "type": mongoose.Schema.Types.ObjectId, "ref": "player", "autopopulate": true },
+	"uploader": { "type": mongoose.Schema.Types.ObjectId, "ref": "player"},
 	"members": [
 		{
 			"userData": { "type": mongoose.Schema.Types.ObjectId, "ref": "player", "autopopulate": true },

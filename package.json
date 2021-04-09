@@ -12,7 +12,7 @@
   "author": "SaltyMonkey",
   "license": "MIT",
   "engines": {
-    "node": ">=15.0.0"
+    "node": ">=16.0.0"
   },
   "dependencies": {
     "fastify": "^3.14.1",

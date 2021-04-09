@@ -23,7 +23,7 @@ const generateUniqKey = (payload) => {
 };
 
 /**
- * setup some routes
+ *  Upload route
  * @param {import("fastify").FastifyInstance} fastify 
  * @param {*} options 
  */
@@ -35,7 +35,7 @@ async function uploadReq(fastify, options) {
 	const analyze = options.analyze;
 	const authHeader = options.apiConfig.authCheckHeader;
 
-	const uploadsCache = new NodeCache({ stdTTL: 60, checkperiod: 20, useClones: false });
+	const uploadsCache = new NodeCache({ stdTTL: apiConfig.maxAllowedTimeDiffSec, checkperiod: 30, useClones: false });
 
 	const isPlacedInCache = (str) => uploadsCache.has(str);
 	const placeInCache = (str) => uploadsCache.set(str);
@@ -99,7 +99,7 @@ async function uploadReq(fastify, options) {
 		const timeDataDiff = currServerTimeSec - payload.encounterUnixEpoch;
 
 		//allowed time diff 
-		//if (timeDataDiff > apiConfig.maxAllowedTimeDiffSec || timeDataDiff < 0) return false;
+		if (timeDataDiff > apiConfig.maxAllowedTimeDiffSec || timeDataDiff < 0) return false;
 		
 		//allowed huntingZone and boss
 		const huntingZoneId = whitelist[payload.areaId];
@@ -156,35 +156,17 @@ async function uploadReq(fastify, options) {
 
 	const modifyMembersArray = (members) => {
 		let membersArray = [];
-
+		const controlledClasses = [classes.BRAWLER, classes.WARRIOR,classes.BERS];
 		members.forEach(item => {
 			const cls = item.playerClass;
 			const buffs = item.buffDetail.map(el => el[0]);
-			if(cls === classes.BRAWLER) {
+			if(controlledClasses.includes(cls)){
 				let newObj = {...item};
-				let res = arraysHasIntersect(analyze.roleType.Brawler.abns[0], buffs);
-				if(res)
-					newObj.roleType = analyze.roleType.Brawler.abns[1];
+				const roleType = analyze.roleType[cls];
+				if(arraysHasIntersect(roleType.abns[0], buffs))
+					newObj.roleType = roleType.abns[1];
 				else
-					newObj.roleType = analyze.roleType.Brawler.default;
-				membersArray.push(newObj);
-			}
-			else if(cls === classes.WARRIOR) {
-				let newObj = {...item};
-				let res = arraysHasIntersect(analyze.roleType.Warrior.abns[0], buffs);
-				if(res)
-					newObj.roleType = analyze.roleType.Warrior.abns[1];
-				else
-					newObj.roleType = analyze.roleType.Warrior.default;
-				membersArray.push(newObj);
-			}
-			else if(cls === classes.BERS) {
-				let newObj = {...item};
-				let res = arraysHasIntersect(analyze.roleType.Berserker.abns[0], buffs);
-				if(res)
-					newObj.roleType = analyze.roleType.Berserker.abns[1];
-				else
-					newObj.roleType = analyze.roleType.Berserker.default;
+					newObj.roleType = roleType.default;
 				membersArray.push(newObj);
 			}
 			else {
@@ -221,12 +203,6 @@ async function uploadReq(fastify, options) {
 		return ref;
 	};
 
-	// eslint-disable-next-line arrow-body-style
-	const isDuplicate = async (payload) => {
-		//const res = await fastify.uploadModel.getFromDb({ payload:})
-		return false;
-	};
-
 	const isAuthTokenInDb = async (headers) => {
 		if(!headers[authHeader]) return false;
 		return !!(await fastify.apiModel.getFromDb(headers[authHeader].toString().trim()));
@@ -247,9 +223,6 @@ async function uploadReq(fastify, options) {
 			throw fastify.httpErrors.forbidden("Upload was already registered.");
 		placeInCache(generateUniqKey(req.body));
 
-		const [dupDbError, dres] = await fastify.to(isDuplicate(req.body));
-		if (dres) throw fastify.httpErrors.forbidden("Upload was already registered.");
-		if (dupDbError) throw fastify.httpErrors.forbidden("Internal database error");
 		const [uploaderDbError, uploader] = await fastify.to(updatePlayerOrAddAndReturfRef(req.body.members[Number(req.body.uploader)]));
 		if (uploaderDbError) throw fastify.httpErrors.internalServerError("Internal database error");
 		
