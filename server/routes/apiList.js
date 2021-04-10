@@ -1,7 +1,7 @@
 "use strict";
 
 /**
- * setup some routes
+ * API list
  * @param {import("fastify").FastifyInstance} fastify 
  * @param {*} options 
  */

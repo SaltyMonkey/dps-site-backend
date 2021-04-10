@@ -6,6 +6,8 @@ const readable = require("readable-url");
 
 const NodeCache = require("node-cache");
 const classes = require("../../enums/classes");
+const status = require("../../enums/statuses");
+
 // eslint-disable-next-line node/no-unpublished-require
 const readableIdGenerator = new readable(true, 5, "");
 
@@ -253,7 +255,7 @@ async function uploadReq(fastify, options) {
 		const [saveUploadDbError, res] = await fastify.to(dbView.save());
 		if (saveUploadDbError) throw fastify.httpErrors.internalServerError("Internal database error");
 
-		return { "status": "OK" };
+		return { status: status.OK };
 	});
 }
 

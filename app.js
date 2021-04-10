@@ -61,9 +61,10 @@ fastify.register(require("./server/routes/apiList.js"));
 
 //init versioned api routes
 fastify.register(require("./server/routes/v1/whitelist.js"), { prefix: "/v1", whitelist: dpsData.whitelist });
-fastify.register(require("./server/routes/v1/search.js"), { prefix: "/v1", apiConfig: dpsData.apiConfig});
+fastify.register(require("./server/routes/v1/search.js"), { prefix: "/v1", apiConfig: dpsData.apiConfig, regionsList: dpsData.regionsList });
 fastify.register(require("./server/routes/v1/upload.js"), { prefix: "/v1", apiConfig: dpsData.apiConfig, regions: dpsData.regions, whitelist: convertWhitelistInObject(dpsData.whitelist), analyze: dpsData.uploadAnalyze });
 fastify.register(require("./server/routes/v1/control.js"), { prefix: "/v1", apiConfig: dpsData.apiConfig });
+
 fastify.options("*", async (req, res) => {
 	res.header("Access-Control-Allow-Origin", "*");
 	res.header("Access-Control-Allow-Methods", "POST, GET");
@@ -74,7 +75,6 @@ const start = async () => {
 	try {
 		await fastify.listen(conf.secureServer ? 443 : conf.serverPort, conf.serverIp);
 	} catch (error) {
-		console.log(error);
 		// eslint-disable-next-line no-magic-numbers
 		process.exit(1);
 	}

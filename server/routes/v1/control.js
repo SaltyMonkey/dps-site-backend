@@ -93,7 +93,7 @@ async function controlReq(fastify, options) {
 
 
 		const newApiKeyLink = new fastify.apiModel({
-			token: req.body[apiKeyName].toString()
+			token: req.body[apiKeyName].toString().trim()
 		});
 
 		// eslint-disable-next-line no-unused-vars

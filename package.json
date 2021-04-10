@@ -12,10 +12,10 @@
   "author": "SaltyMonkey",
   "license": "MIT",
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=15.10.0"
   },
   "dependencies": {
-    "fastify": "^3.14.1",
+    "fastify": "^3.14.2",
     "fastify-plugin": "^3.0.0",
     "fastify-sensible": "^3.1.1",
     "fluent-json-schema": "^2.0.4",

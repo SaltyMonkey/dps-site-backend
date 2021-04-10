@@ -2,7 +2,6 @@
 
 const S = require("fluent-json-schema");
 const classes = require("../../enums/classes");
-const regions = require("../../enums/regions");
 const roles = require("../../enums/classRoles");
 const time = require("../../enums/time");
 const luxon = require("luxon");
@@ -14,41 +13,14 @@ const luxon = require("luxon");
  */
 async function searchReq(fastify, options) {
 	const apiConfig = options.apiConfig;
-
-	const responseSchema = S.array()
-		.id("searchResponse2xx")
-		.description("Cutted upload representation with basic info")
-		.items(
-			S.object()
-				.additionalProperties(false)
-				.prop("runId", S.string().required())
-				.prop("encounterUnixEpoch", S.integer().required())
-				.prop("huntingZoneId", S.integer().required())
-				.prop("bossId", S.integer().required())
-				.prop("fightDuration", S.string().required())
-				.prop("isP2WConsums", S.boolean())
-				.prop("isMultipleTanks", S.boolean().required())
-				.prop("isMultipleHeals", S.boolean().required())
-				.prop("partyDps", S.string().required())
-				.prop("members", S.array().required().items(
-					S.object()
-						.additionalProperties(false)
-						.prop("playerClass", S.string().required())
-						.prop("playerDps", S.string().required())
-						.prop("playerName", S.string().required())
-						.prop("playerServer", S.string().required())
-						.prop("playerServerId", S.integer().required())
-						.prop("playerId", S.integer().required())
-				))
-		)
-		.valueOf();
+	const regionsList = options.regionsList;
 
 	const schemaRecent = {
 		body: (S.object()
 			.id("searchRecentPostRequestBody")
 			.description("All available parameters for search in recent requests")
 			.additionalProperties(false)
-			.prop("region", S.string().enum(regions).required())
+			.prop("region", S.string().enum(regionsList).required())
 			.prop("huntingZoneId", S.integer())
 			.prop("bossId", S.integer())
 			.prop("isShame", S.boolean())
@@ -65,7 +37,33 @@ async function searchReq(fastify, options) {
 		)
 			.valueOf(),
 		response: {
-			"2xx": responseSchema
+			"2xx": S.array()
+				.id("searchResponse2xx")
+				.description("Cutted upload representation with basic info")
+				.items(
+					S.object()
+						.additionalProperties(false)
+						.prop("runId", S.string().required())
+						.prop("encounterUnixEpoch", S.integer().required())
+						.prop("huntingZoneId", S.integer().required())
+						.prop("bossId", S.integer().required())
+						.prop("fightDuration", S.string().required())
+						.prop("isP2WConsums", S.boolean())
+						.prop("isMultipleTanks", S.boolean().required())
+						.prop("isMultipleHeals", S.boolean().required())
+						.prop("partyDps", S.string().required())
+						.prop("members", S.array().required().items(
+							S.object()
+								.additionalProperties(false)
+								.prop("playerClass", S.string().required())
+								.prop("playerDps", S.string().required())
+								.prop("playerName", S.string().required())
+								.prop("playerServer", S.string().required())
+								.prop("playerServerId", S.integer().required())
+								.prop("playerId", S.integer().required())
+						))
+				)
+				.valueOf()
 		}
 	};
 
@@ -74,7 +72,7 @@ async function searchReq(fastify, options) {
 			.id("searchTopPostRequestBody")
 			.description("All available parameters to search in top runs")
 			.additionalProperties(false)
-			.prop("region", S.string().enum(regions).required())
+			.prop("region", S.string().enum(regionsList).required())
 			.prop("huntingZoneId", S.number().required())
 			.prop("bossId", S.number().required())
 			.prop("playerClass", S.string().enum(Object.values(classes)).required())
@@ -111,7 +109,7 @@ async function searchReq(fastify, options) {
 				.prop("runId", S.string().required())
 				.prop("bossId", S.integer().required())
 				.prop("huntingZoneId", S.integer().required())
-				.prop("region", S.string().required())
+				.prop("region", S.string().enum(regionsList).required())
 				.prop("encounterUnixEpoch", S.integer().required())
 				.prop("fightDuration", S.string().required())
 				.prop("partyDps", S.string().required())

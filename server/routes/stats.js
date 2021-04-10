@@ -3,7 +3,7 @@
 const S = require("fluent-json-schema");
 
 /**
- * setup some routes
+ * Live route
  * @param {import("fastify").FastifyInstance} fastify 
  * @param {*} options 
  */

@@ -30,7 +30,7 @@ module.exports = {
 	"uploadAnalyze": {
 		"minMultipleTanksTriggerAmount": 2,
 		"minMultipleHealersTriggerAmount": 2,
-		"p2wAbnormals": [33, 5020013, 14400002, 14400001, 14400003, 16300015, 16300013, 5030004, 470110, 470101, 470102, 470103, 470104, 470105, 470106],
+		"p2wAbnormals": [33, 77002, 77003, 77004, 77005, 5020013, 14400002, 14400001, 14400003, 16300015, 16300013, 5030004, 470110, 470101, 470102, 470103, 470104, 470105, 470106],
 		"tankAbnormals": [10153561, 10200, 10201, 401400],
 		"roleType": {
 			"Brawler": {
@@ -49,6 +49,6 @@ module.exports = {
 		"isShameDeathsAmount": 10
 	},
 	"whitelist": list,
-	"regions": serversShapeConverter(serversPerRegion)
-
+	"regions": serversShapeConverter(serversPerRegion),
+	"regionsList": Object.keys(serversPerRegion.data)
 };

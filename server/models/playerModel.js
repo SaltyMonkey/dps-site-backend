@@ -3,11 +3,11 @@
 const mongoose = require("mongoose");
 
 const playerSchema = new mongoose.Schema({
-	"playerClass": String, 
-	"playerName": String,
-	"playerId": Number,
-	"playerServerId" : Number,
-	"playerServer": String
+	playerClass: String, 
+	playerName: String,
+	playerId: Number,
+	playerServerId : Number,
+	playerServer: String
 });
 
 playerSchema.statics.getFromDbLinked = async function (serverId, playerId, playerClass) {
