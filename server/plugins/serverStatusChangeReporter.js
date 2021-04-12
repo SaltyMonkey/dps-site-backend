@@ -18,17 +18,17 @@ async function serverStatusChangeReporter(fastify, options) {
 
 	fastify.addHook("onReady", async () => {
 		const obj = {
-			"method": "POST",
-			"body": JSON.stringify({
-				"username": botName,
-				"embeds": [
+			method: "POST",
+			body: JSON.stringify({
+				username: botName,
+				embeds: [
 					{
-						"description": ":white_check_mark: Server started",
-						"color": 392279
+						description: ":white_check_mark: Server started",
+						color: 392279
 					}
 				]
 			}),
-			"headers": { "Content-Type": "application/json" },
+			headers: { "Content-Type": "application/json" },
 		};
 		await sendDataAsPost(obj, discordWebHook);
 
@@ -36,17 +36,17 @@ async function serverStatusChangeReporter(fastify, options) {
 
 	const closeHandler = async () => {
 		const obj = {
-			"method": "POST",
-			"body": JSON.stringify({
-				"username": botName,
-				"embeds": [
+			method: "POST",
+			body: JSON.stringify({
+				username: botName,
+				embeds: [
 					{
-						"description": ":octagonal_sign: Server stopped",
-						"color": 16515072
+						description: ":octagonal_sign: Server stopped",
+						color: 16515072
 					}
 				]
 			}),
-			"headers": { "Content-Type": "application/json" },
+			headers: { "Content-Type": "application/json" },
 		};
 		await sendDataAsPost(obj, discordWebHook);
 		// eslint-disable-next-line no-process-exit

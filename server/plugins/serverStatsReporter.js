@@ -1,7 +1,6 @@
 const fastifyPlugin = require("fastify-plugin");
 const nodeShedule = require("node-schedule");
 const fetch = require("node-fetch");
-const moment = require("moment");
 
 const symbolServerTiming = Symbol("ServerTiming");
 
@@ -51,7 +50,7 @@ async function serverStatsReporter(fastify, options) {
 	});
 
 	nodeShedule.scheduleJob(cronString, async () => {
-		const uptimeProcess = moment.duration(process.uptime(), "seconds");
+		const uptimeProcess = process.uptime();
 		const procMem = process.memoryUsage();
 
 		const processStats = [
@@ -72,30 +71,30 @@ async function serverStatsReporter(fastify, options) {
 		];
 
 		const obj = {
-			"method": "POST",
-			"body": JSON.stringify({
-				"username": botName,
-				"embeds": [{
-					"title": `:tools: ${title} :tools:`,
-					"color": 392279,
-					"timestamp": new Date().toISOString(),
-					"footer": {
-						"text": "by SaltyMonkey"
+			method: "POST",
+			body: JSON.stringify({
+				username: botName,
+				embeds: [{
+					title: `:tools: ${title} :tools:`,
+					color: 392279,
+					timestamp: new Date().toISOString(),
+					footer: {
+						text: "by SaltyMonkey"
 					},
-					"fields": [
+					fields: [
 						{
-							"name": ":gear: Process stats",
-							"value": processStats.join("\n")
+							name: ":gear: Process stats",
+							value: processStats.join("\n")
 						},
 						{
-							"name": ":gear: API stats",
-							"value": apiUptime.join("\n")
+							name: ":gear: API stats",
+							value: apiUptime.join("\n")
 						}
 
 					]
 				}]
 			}),
-			"headers": { "Content-Type": "application/json" },
+			headers: { "Content-Type": "application/json" },
 		};
 
 		await sendDataAsPost(obj, discordWebHook);

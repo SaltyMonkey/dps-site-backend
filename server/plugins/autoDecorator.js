@@ -18,7 +18,6 @@ async function autoDecorator(fastify, options) {
 
 	const files = fs.readdirSync(folder);
 	files.forEach((file) => {
-		
 		const filePath = path.join(folder, file);
 		if (!ignore.includes(file[0])) {
 			// eslint-disable-next-line global-require

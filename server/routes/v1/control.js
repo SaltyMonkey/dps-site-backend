@@ -38,7 +38,7 @@ async function controlReq(fastify, options) {
 		body: (
 			S.object()
 				.additionalProperties(false)
-				.prop("runId", S.string().minLength(20).maxLength(50).required())
+				.prop("runId", S.string().required())
 		)
 			.valueOf(),
 		headers: headersSchema,

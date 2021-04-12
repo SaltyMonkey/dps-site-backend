@@ -26,7 +26,7 @@ async function searchReq(fastify, options) {
 			.prop("isShame", S.boolean())
 			.prop("timeRange", S.string().enum(Object.values(time)).required())
 			.prop("playerClass", S.string().enum(Object.values(classes)))
-			.prop("roleType", S.string().enum(Object.values(roles)))
+			.prop("roleType", S.integer().enum(Object.values(roles)))
 			.prop("isP2WConsums", S.boolean())
 			.prop("isMultipleHeals", S.boolean())
 			.prop("isMultipleTanks", S.boolean())
@@ -67,23 +67,63 @@ async function searchReq(fastify, options) {
 		}
 	};
 
+	const schemaLatest = {
+		body: (S.object()
+			.id("searchLatestPostRequestBody")
+			.description("Search in recent request schema")
+			.additionalProperties(false)
+			.prop("region", S.string().enum(regionsList).required())
+		)
+			.valueOf(),
+		response: {
+			"2xx": S.array()
+				.id("searchResponse2xx")
+				.description("Search in recent response schema")
+				.items(
+					S.object()
+						.additionalProperties(false)
+						.prop("runId", S.string().required())
+						.prop("encounterUnixEpoch", S.integer().required())
+						.prop("huntingZoneId", S.integer().required())
+						.prop("bossId", S.integer().required())
+						.prop("fightDuration", S.string().required())
+						.prop("isP2WConsums", S.boolean())
+						.prop("isMultipleTanks", S.boolean().required())
+						.prop("isMultipleHeals", S.boolean().required())
+						.prop("partyDps", S.string().required())
+						.prop("members", S.array().required().items(
+							S.object()
+								.additionalProperties(false)
+								.prop("playerClass", S.string().required())
+								.prop("playerDps", S.string().required())
+								.prop("playerName", S.string().required())
+								.prop("playerServer", S.string().required())
+								.prop("playerServerId", S.integer().required())
+								.prop("playerId", S.integer().required())
+						))
+				)
+				.valueOf()
+		}
+	};
+
 	const schemaByTop = {
 		body: (S.object()
 			.id("searchTopPostRequestBody")
-			.description("All available parameters to search in top runs")
+			.description("Search in top request schema")
 			.additionalProperties(false)
 			.prop("region", S.string().enum(regionsList).required())
-			.prop("huntingZoneId", S.number().required())
-			.prop("bossId", S.number().required())
+			.prop("huntingZoneId", S.integer().minimum(0).required())
+			.prop("bossId", S.integer().minimum(0).required())
 			.prop("playerClass", S.string().enum(Object.values(classes)).required())
-			.prop("playerServer", S.string())
+			.prop("playerServer", S.string().required())
 			.prop("timeRange", S.string().enum(Object.values(time)).required())
-			.prop("roleType", S.string().enum(Object.values(roles)))		
+			.prop("roleType", S.integer().enum(Object.values(roles)))		
 		)
 			.valueOf(),
 		response: {
 			"2xx": S.array()
 				.id("searchTopResponse2xx")
+				.description("Search in top response schema")
 				.items(
 					S.object()
 						.additionalProperties(false)
@@ -92,6 +132,7 @@ async function searchReq(fastify, options) {
 						.prop("playerClass", S.string().required())
 						.prop("playerDps", S.string().required())
 						.prop("playerName", S.string().required())
+						.prop("playerServer", S.string().required())
 				)
 				.valueOf()
 		}
@@ -171,6 +212,24 @@ async function searchReq(fastify, options) {
 
 		return timeSelector;
 	};
+
+	fastify.post("/search/latest", { prefix: options.prefix, config: options.config, schema: schemaLatest }, async (req) => {
+		let params = { ...req.body };
+
+		const [dbError, res] = await fastify.to(fastify.uploadModel.getLatestRuns(params, apiConfig.recentRunsAmount));
+		if (dbError) throw fastify.httpErrors.internalServerError("Internal database error");
+
+		if (res) {
+			for (let j = 0; j < res.length; j++) {
+				const run = res[j];
+				for (let i = 0; i < run.members.length; i++) {
+					run.members[i] = { ...run.members[i], ...run.members[i].userData };
+				}
+			}
+		}
+
+		return res;
+	});
 
 	fastify.post("/search/recent", { prefix: options.prefix, config: options.config, schema: schemaRecent }, async (req) => {
 		let params = { ...req.body };

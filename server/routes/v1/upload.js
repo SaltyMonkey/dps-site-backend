@@ -108,18 +108,20 @@ async function uploadReq(fastify, options) {
 		if (!huntingZoneId || (huntingZoneId && Array.isArray(huntingZoneId) && huntingZoneId.length > 0 && !huntingZoneId.includes(payload.bossId))) return false;
 
 		//compare party dps dps
-		const partyDps = BigInt(payload.partyDps);
-		if (partyDps > BigInt(apiConfig.maxPartyDps) || partyDps < BigInt(apiConfig.minPartyDps)) return false;
+		const partyDps = Number(payload.partyDps);
+		if (partyDps > apiConfig.maxPartyDps || partyDps < apiConfig.minPartyDps) return false;
 
 		//compare members amounts
 		if (payload.members.length < apiConfig.minMembersCount || payload.members.length > apiConfig.maxMembersCount) return false;
 
 		//check validity of uploader
-		if (Number(payload.uploader) > payload.members.length || Number(payload.uploader) < 0) return false;
+		const uploader = Number(payload.uploader);
+		if ( uploader > payload.members.length || uploader< 0) return false;
 		
-		//check buffs and debuffs
+		//check debuffs
 		if (!Array.isArray(payload.debuffDetail) || (Array.isArray(payload.debuffDetail) && payload.debuffDetail.length === 0)) return false;
 
+		//check buffs 
 		payload.members.forEach( member => {
 			if (!Array.isArray(member.buffDetail) || (Array.isArray(member.buffDetail) && member.buffDetail.length === 0)) return false;
 		});
@@ -132,17 +134,23 @@ async function uploadReq(fastify, options) {
 		let healersCounter = 0;
 		let deaths = 0;
 		let region = "";
+		let specialBuffs = false; 
+
 		payload.members.forEach(member => {
 			const pcls = member.playerClass;
+			const buffs = member.buffDetail.map(el => el[0]);
 			deaths += member.playerDeaths;
+
+			if(arraysHasIntersect(analyze.p2wAbnormals, buffs)) specialBuffs = true;
+
 			if (pcls === classes.PRIEST || pcls === classes.MYSTIC)
 				healersCounter += 1;
 			else if (pcls === classes.BRAWLER || pcls === classes.WARRIOR || pcls === classes.BERS) {
-				const buffs = member.buffDetail.map(el => el[0]);
-
-				if (arraysHasIntersect(analyze.tankAbnormals, buffs)) tanksCounter += 1;
+				if (arraysHasIntersect(analyze.tankAbnormals, buffs))
+					tanksCounter += 1;
 			}
-			else if (pcls === classes.LANCER) tanksCounter += 1;
+			else if (pcls === classes.LANCER)
+				tanksCounter += 1;
 		});
 
 		region = regions[payload.members[0].playerServer];
@@ -151,14 +159,14 @@ async function uploadReq(fastify, options) {
 			isShame: deaths >= analyze.isShameDeathsAmount,
 			isMultipleTanks: tanksCounter >= analyze.minMultipleTanksTriggerAmount,
 			isMultipleHeals: healersCounter >= analyze.minMultipleHealsTriggerAmount,
-			isP2WConsums: false,
+			isP2WConsums: specialBuffs,
 			region: region
 		};
 	};
-
+	
+	const controlledClasses = [classes.BRAWLER, classes.WARRIOR,classes.BERS];
 	const modifyMembersArray = (members) => {
 		let membersArray = [];
-		const controlledClasses = [classes.BRAWLER, classes.WARRIOR,classes.BERS];
 		members.forEach(item => {
 			const cls = item.playerClass;
 			const buffs = item.buffDetail.map(el => el[0]);
@@ -222,7 +230,7 @@ async function uploadReq(fastify, options) {
 		if (!prereqsCheck(req.body)) throw fastify.httpErrors.forbidden("Can't accept this upload");
 		//Fast check in cache by uniq string gathered in payload without accessing database
 		if (isPlacedInCache(generateUniqKey(req.body))) 
-			throw fastify.httpErrors.forbidden("Upload was already registered.");
+			throw fastify.httpErrors.forbidden("Duplicated upload.");
 		placeInCache(generateUniqKey(req.body));
 
 		const [uploaderDbError, uploader] = await fastify.to(updatePlayerOrAddAndReturfRef(req.body.members[Number(req.body.uploader)]));
