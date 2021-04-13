@@ -3,6 +3,7 @@
 const S = require("fluent-json-schema");
 const status = require("../../enums/statuses");
 const role = require("../../enums/roles");
+const strings = require("../../enums/strings");
 
 /**
  * Control routes
@@ -13,11 +14,11 @@ async function controlReq(fastify, options) {
 	const apiKeyName = "apiKey";
 	const config = options.config;
 	const prefix = options.prefix;
-	const authHeader = options.apiConfig.authCheckHeader;
+	const authHeaderKey = options.apiConfig.authCheckHeader;
 
 	const headersSchema = (
 		S.object()
-			.prop(authHeader, S.string().minLength(20).maxLength(50).required())
+			.prop(authHeaderKey, S.string().minLength(20).maxLength(50).required())
 	)
 		.valueOf();
 
@@ -58,69 +59,62 @@ async function controlReq(fastify, options) {
 	};
 
 	fastify.post("/control/uploads/remove", { prefix: prefix, config, schema: schemaUploads }, async (req) => {
-		let uploadData = false;
-		let isAdmin = false;
-		let removeData = false;
+		const authHeader = req.headers[authHeaderKey].trim();
+		const id = req.body.runId.trim();
 
-		let adminCheckDbStatus = false;
-		let uploadCheckDbAccess = false;
-		let deleteCheckDbStatus = false;
+		const [adminCheckDbStatus, isAdmin] = await fastify.to(isRoleAdmin(authHeader));
+		if (adminCheckDbStatus) throw fastify.httpErrors.internalServerError(strings.DBERRSTR);
+		if (!isAdmin) throw fastify.httpErrors.forbidden(strings.AUTHERRSTR);
 
-		[adminCheckDbStatus, isAdmin] = await fastify.to(isRoleAdmin(req.headers[authHeader]));
-		[uploadCheckDbAccess, uploadData] = await fastify.to(fastify.uploadModel.getFromDbLinked(req.body["runId"]));
-		if (adminCheckDbStatus || uploadCheckDbAccess) throw fastify.httpErrors.internalServerError("Internal database error");
-		if (!isAdmin || !uploadData) throw fastify.httpErrors.forbidden("Access denied!");
+		const [uploadCheckDbAccess, uploadData] = await fastify.to(fastify.uploadModel.getFromDbLinked(id));
+		if (uploadCheckDbAccess) throw fastify.httpErrors.internalServerError(strings.DBERRSTR);
+		if (!uploadData) throw fastify.httpErrors.forbidden(strings.EDITERRSTR);
 
 		// eslint-disable-next-line no-unused-vars
-		[deleteCheckDbStatus, removeData] = await fastify.to(uploadData.delete());
-		if (deleteCheckDbStatus) throw fastify.httpErrors.internalServerError("Internal database error");
+		const [deleteCheckDbStatus, removeData] = await fastify.to(uploadData.delete());
+		if (deleteCheckDbStatus) throw fastify.httpErrors.internalServerError(strings.DBERRSTR);
 
 		return { status: status.OK };
 	});
 
 	fastify.post("/control/access/add", { prefix: prefix, config, schema: schemaApi }, async (req) => {
-		let isApiKeyExists = false;
-		let isAdmin = false;
+		const authHeader = req.headers[authHeaderKey].trim();
+		const apiKey = req.body[apiKeyName].toString().trim();
 
-		let adminCheckDbStatus = false;
-		let apiCheckDbAccess = false;
-		let addCheckDbStatus = false;
+		const [adminCheckDbStatus, isAdmin] = await fastify.to(isRoleAdmin(authHeader));
+		if (adminCheckDbStatus) throw fastify.httpErrors.internalServerError(strings.DBERRSTR);
+		if (!isAdmin) throw fastify.httpErrors.forbidden(strings.AUTHERRSTR);
 
-		[adminCheckDbStatus, isAdmin] = await fastify.to(isRoleAdmin(req.headers[authHeader]));
-		[apiCheckDbAccess, isApiKeyExists] = await fastify.to(fastify.apiModel.getFromDb(req.body[apiKeyName]));
-		if (adminCheckDbStatus || apiCheckDbAccess) throw fastify.httpErrors.internalServerError("Internal database error");
-		if (!isAdmin || isApiKeyExists) throw fastify.httpErrors.forbidden("Access denied!");
-
+		const [apiCheckDbAccess, isApiKeyExists] = await fastify.to(fastify.apiModel.getFromDb(apiKey));
+		if (apiCheckDbAccess) throw fastify.httpErrors.internalServerError(strings.DBERRSTR);
+		if (isApiKeyExists) throw fastify.httpErrors.forbidden(strings.EDITERRSTR);
 
 		const newApiKeyLink = new fastify.apiModel({
-			token: req.body[apiKeyName].toString().trim()
+			token: apiKey
 		});
 
 		// eslint-disable-next-line no-unused-vars
-		[addCheckDbStatus] = await fastify.to(newApiKeyLink.save());
-		if (addCheckDbStatus) throw fastify.httpErrors.internalServerError("Internal database error");
+		const [addCheckDbStatus] = await fastify.to(newApiKeyLink.save());
+		if (addCheckDbStatus) throw fastify.httpErrors.internalServerError(strings.DBERRSTR);
 
 		return { status: status.OK };
 	});
 
 	fastify.post("/control/access/remove", { prefix: prefix, config, schema: schemaApi }, async (req) => {
-		let isAdmin = false;
-		let accessKeyObj = false;
-		let removeData = false;
+		const authHeader = req.headers[authHeaderKey].trim();
+		const apiKey = req.body[apiKeyName].toString().trim();
 
-		let adminCheckdbStatus = false;
-		let userCheckDbStatus = false;
-		let deleteCheckDbStatus = false;
+		const [adminCheckDbStatus, isAdmin] = await fastify.to(isRoleAdmin(authHeader));
+		if (adminCheckDbStatus) throw fastify.httpErrors.internalServerError(strings.DBERRSTR);
+		if (!isAdmin) throw fastify.httpErrors.forbidden(strings.AUTHERRSTR);
 
-		[adminCheckdbStatus, isAdmin] = await fastify.to(isRoleAdmin(req.headers[authHeader]));
-		[userCheckDbStatus, accessKeyObj] = await fastify.to(fastify.apiModel.getFromDbLinked(req.body[apiKeyName]));
-
-		if (adminCheckdbStatus || userCheckDbStatus) throw fastify.httpErrors.internalServerError("Internal database error");
-		if (!isAdmin || !accessKeyObj) throw fastify.httpErrors.forbidden("Access denied!");
+		const [userCheckDbStatus, accessKeyObj] = await fastify.to(fastify.apiModel.getFromDbLinked(apiKey));
+		if (userCheckDbStatus) throw fastify.httpErrors.internalServerError(strings.DBERRSTR);
+		if (!accessKeyObj) throw fastify.httpErrors.forbidden(strings.EDITERRSTR);
 
 		// eslint-disable-next-line no-unused-vars
-		[deleteCheckDbStatus, removeData] = await fastify.to(accessKeyObj.delete());
-		if (deleteCheckDbStatus) throw fastify.httpErrors.internalServerError("Internal database error");
+		const [deleteCheckDbStatus, removeData] = await fastify.to(accessKeyObj.delete());
+		if (deleteCheckDbStatus) throw fastify.httpErrors.internalServerError(strings.DBERRSTR);
 
 		return { status: status.OK };
 	});

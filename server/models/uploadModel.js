@@ -165,7 +165,7 @@ upload.statics.getTopRuns = async function (data, limit) {
 
 upload.statics.getFromDbLinked = async function (runId) {
 	return await this.findOne({
-		runId: runId.trim()
+		runId: runId
 	});
 };
 

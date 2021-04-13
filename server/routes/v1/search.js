@@ -4,6 +4,7 @@ const S = require("fluent-json-schema");
 const classes = require("../../enums/classes");
 const roles = require("../../enums/classRoles");
 const time = require("../../enums/time");
+const strings = require("../../enums/strings");
 const luxon = require("luxon");
 
 /**
@@ -217,7 +218,7 @@ async function searchReq(fastify, options) {
 		let params = { ...req.body };
 
 		const [dbError, res] = await fastify.to(fastify.uploadModel.getLatestRuns(params, apiConfig.recentRunsAmount));
-		if (dbError) throw fastify.httpErrors.internalServerError("Internal database error");
+		if (dbError) throw fastify.httpErrors.internalServerError(strings.DBERRSTR);
 
 		if (res) {
 			for (let j = 0; j < res.length; j++) {
@@ -228,7 +229,7 @@ async function searchReq(fastify, options) {
 			}
 		}
 
-		return res;
+		return res || [];
 	});
 
 	fastify.post("/search/recent", { prefix: options.prefix, config: options.config, schema: schemaRecent }, async (req) => {
@@ -258,7 +259,7 @@ async function searchReq(fastify, options) {
 		}
 
 		const [dbError, res] = await fastify.to(fastify.uploadModel.getLatestRuns(params, apiConfig.recentRunsAmount));
-		if (dbError) throw fastify.httpErrors.internalServerError("Internal database error");
+		if (dbError) throw fastify.httpErrors.internalServerError(strings.DBERRSTR);
 
 		if (res) {
 			for (let j = 0; j < res.length; j++) {
@@ -269,7 +270,7 @@ async function searchReq(fastify, options) {
 			}
 		}
 
-		return res;
+		return res || [];
 	});
 
 	fastify.post("/search/top", { prefix: options.prefix, config: options.config, schema: schemaByTop }, async (req) => {
@@ -280,20 +281,24 @@ async function searchReq(fastify, options) {
 		
 		const [dbError, res] = await fastify.to(fastify.uploadModel.getTopRuns(params, apiConfig.topPlacesAmount));
 		console.log(dbError);
-		if (dbError) throw fastify.httpErrors.internalServerError("Internal database error");
+		if (dbError) throw fastify.httpErrors.internalServerError(strings.DBERRSTR);
 
 		return res;
 	});
 
 	fastify.post("/search/id", { prefix: options.prefix, config: options.config, schema: schemaFull }, async (req) => {
-		const [dbError, res] = await fastify.to(fastify.uploadModel.getCompleteRun(req.body.runId));
-		if (dbError) throw fastify.httpErrors.internalServerError("Internal database error");
-		if(!res) throw fastify.httpErrors.notFound("");
+		const id = req.body.runId.toString().trim();
+
+		const [dbError, res] = await fastify.to(fastify.uploadModel.getCompleteRun(id));
+		if (dbError) throw fastify.httpErrors.internalServerError(strings.DBERRSTR);
+		if(!res) throw fastify.httpErrors.notFound(strings.NOTFOUNDERRSTR);
+		
 		if (res) {
 			for (let i = 0; i < res.members.length; i++) {
 				res.members[i] = { ...res.members[i], ...res.members[i].userData };
 			}
 		}
+		
 		return res;
 	});
 }

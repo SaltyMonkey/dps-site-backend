@@ -7,6 +7,7 @@ const readable = require("readable-url");
 const NodeCache = require("node-cache");
 const classes = require("../../enums/classes");
 const status = require("../../enums/statuses");
+const strings = require("../../enums/strings");
 
 // eslint-disable-next-line node/no-unpublished-require
 const readableIdGenerator = new readable(true, 5, "");
@@ -214,34 +215,39 @@ async function uploadReq(fastify, options) {
 	};
 
 	const isAuthTokenInDb = async (headers) => {
-		if(!headers[authHeader]) return false;
-		return !!(await fastify.apiModel.getFromDb(headers[authHeader].toString().trim()));
+		const authHeader = headers[authHeader].toString().trim();
+
+		if(!authHeader) return false;
+
+		return !!(await fastify.apiModel.getFromDb(authHeader));
 	};
 
 	fastify.post("/upload", { prefix, config: options.config, schema }, async (req) => {
+		const payload = req.body;
+		const headers = req.headers;
 
 		if (!apiConfig.allowAnonymousUpload) {
-			const [authCheckDbError, dbres] = await fastify.to(isAuthTokenInDb(req.headers));
-			if (authCheckDbError) fastify.httpErrors.forbidden("Internal database error");
-			if (!dbres) throw fastify.httpErrors.forbidden("Invalid auth");
+			const [authCheckDbError, dbres] = await fastify.to(isAuthTokenInDb(headers));
+			if (authCheckDbError) fastify.httpErrors.forbidden(strings.DBERRSTR);
+			if (!dbres) throw fastify.httpErrors.forbidden(strings.AUTHERRSTR);
 		}
 
 		//basic validation of data
-		if (!prereqsCheck(req.body)) throw fastify.httpErrors.forbidden("Can't accept this upload");
+		if (!prereqsCheck(payload)) throw fastify.httpErrors.forbidden(strings.UPLOADLOADERRSTR);
 		//Fast check in cache by uniq string gathered in payload without accessing database
-		if (isPlacedInCache(generateUniqKey(req.body))) 
-			throw fastify.httpErrors.forbidden("Duplicated upload.");
-		placeInCache(generateUniqKey(req.body));
+		if (isPlacedInCache(generateUniqKey(payload))) 
+			throw fastify.httpErrors.forbidden(strings.UPLOADDUPERRSTR);
+		placeInCache(generateUniqKey(payload));
 
-		const [uploaderDbError, uploader] = await fastify.to(updatePlayerOrAddAndReturfRef(req.body.members[Number(req.body.uploader)]));
-		if (uploaderDbError) throw fastify.httpErrors.internalServerError("Internal database error");
+		const [uploaderDbError, uploader] = await fastify.to(updatePlayerOrAddAndReturfRef(payload.members[Number(payload.uploader)]));
+		if (uploaderDbError) throw fastify.httpErrors.internalServerError(strings.DBERRSTR);
 		
-		const analyzeRes = analyzePayload(req.body);
+		const analyzeRes = analyzePayload(payload);
 		//create db view
-		let dbView = new fastify.uploadModel(req.body);
+		let dbView = new fastify.uploadModel(payload);
 		dbView.runId = readableIdGenerator.generate();
 		dbView.region = analyzeRes.region;
-		dbView.huntingZoneId = req.body.areaId;
+		dbView.huntingZoneId = payload.areaId;
 		dbView.uploader = uploader;
 		dbView.isShame = analyzeRes.isShame;
 		dbView.isMultipleTanks = analyzeRes.isMultipleTanks;
@@ -249,19 +255,18 @@ async function uploadReq(fastify, options) {
 		dbView.isP2WConsums = analyzeRes.isP2WConsums;
 
 		dbView.members = [];
-
-		const modifiedMembers = modifyMembersArray(req.body.members);
+		const modifiedMembers = modifyMembersArray(payload.members);
 
 		for (const member of modifiedMembers) {
 			const [memberDbError, ref] = await fastify.to(updatePlayerOrAddAndReturfRef(member));
-			if (memberDbError) throw fastify.httpErrors.internalServerError("Internal database error");
+			if (memberDbError) throw fastify.httpErrors.internalServerError(strings.DBERRSTR);
 			const obj = member;
 			obj.userData = ref;
 			dbView.members.push(obj);
 		}
 
 		const [saveUploadDbError, res] = await fastify.to(dbView.save());
-		if (saveUploadDbError) throw fastify.httpErrors.internalServerError("Internal database error");
+		if (saveUploadDbError) throw fastify.httpErrors.internalServerError(strings.DBERRSTR);
 
 		return { status: status.OK };
 	});

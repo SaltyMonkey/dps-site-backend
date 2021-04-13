@@ -27,8 +27,8 @@ let opts = {
 
 if(process.platform === "linux") {
 	opts.logger = {
-		level: conf.LogLevel,
-		file: conf.logPath
+		level: "error",
+		file: "/var/log/teralogs-errors.log"
 	};
 }
 else {
@@ -45,7 +45,7 @@ const fastify = require("fastify")(opts);
 fastify.register(require("fastify-sensible"));
 
 fastify.register(require("./server/plugins/routeList.js"));
-fastify.register(require("./server/plugins/headers.js"), { changeTo: [ { header: "Permissions-Policy", value: "interest-cohort=()" }, { header: "X-Powered-By", value: "Hamsters" }, { header: "Access-Control-Allow-Origin", value: "*"}, { header: "Access-Control-Allow-Headers", value: "*"}, { header: "Access-Control-Allow-Methods", value: "*"} ]});
+fastify.register(require("./server/plugins/headers.js"), { changeTo: [ { header: "Permissions-Policy", value: "interest-cohort=()" }, { header: "X-Powered-By", value: "Hamsters" }, { header: "Access-Control-Allow-Origin", value: "*"}, { header: "Access-Control-Allow-Headers", value: "*"} ]});
 fastify.register(require("./server/plugins/mongoose.js"), { connectionString: conf.dbConnectionString, poolSize: conf.dbPoolSize });
 fastify.register(require("./server/plugins/autoDecorator.js"), { folder: path.resolve(__dirname, "./server/models"), excludeIfNameContains: ["_"] });
 fastify.register(require("./server/plugins/serverStatsReporter.js"), { botName: "DPS backend", title: "Server stats", discordWebHook: conf.discordWebHook, cronString: conf.cronString, maxDelaysForCalc: 50000 });
@@ -57,8 +57,8 @@ fastify.addSchema(require("./server/routes/v1/sharedSchemas/statusResponse"));
 //init static routes
 fastify.register(require("./server/routes/icon.js"));
 fastify.register(require("./server/routes/stats.js"));
-fastify.register(require("./server/routes/apiList.js"));
-fastify.register(require("./server/routes/globalCors.js"));
+fastify.register(require("./server/routes/api.js"));
+fastify.register(require("./server/routes/cors.js"));
 
 //init versioned api routes
 fastify.register(require("./server/routes/v1/whitelist.js"), { prefix: "/v1", whitelist: dpsData.whitelist });
