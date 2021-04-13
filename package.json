@@ -19,6 +19,7 @@
     "fastify-plugin": "^3.0.0",
     "fastify-sensible": "^3.1.1",
     "fluent-json-schema": "^2.0.4",
+    "humanize-duration": "^3.25.1",
     "luxon": "^1.26.0",
     "mongoose": "^5.12.3",
     "mongoose-autopopulate": "^0.12.3",
@@ -29,9 +30,9 @@
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.13.14",
-    "eslint": "^7.23.0",
+    "eslint": "^7.24.0",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-unicorn": "^28.0.2",
-    "tap": "^15.0.1"
+    "tap": "^15.0.2"
   }
 }

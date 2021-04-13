@@ -60,6 +60,9 @@ fastify.register(require("./server/routes/stats.js"));
 fastify.register(require("./server/routes/api.js"));
 fastify.register(require("./server/routes/cors.js"));
 
+// Shinra servertime link wrapper
+fastify.register(require("./server/routes/shinraTime.js"));
+
 //init versioned api routes
 fastify.register(require("./server/routes/v1/whitelist.js"), { prefix: "/v1", whitelist: dpsData.whitelist });
 fastify.register(require("./server/routes/v1/search.js"), { prefix: "/v1", apiConfig: dpsData.apiConfig, regionsList: dpsData.regionsList });

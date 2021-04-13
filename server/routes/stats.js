@@ -1,6 +1,7 @@
 "use strict";
 
 const S = require("fluent-json-schema");
+const humanizeDuration = require("humanize-duration");
 
 /**
  * Live route
@@ -14,15 +15,13 @@ async function statsReq(fastify, options) {
 			"2xx": (S.object()
 				.additionalProperties(false)
 				.prop("uptime", S.number().required())
-				.prop("serverTime", S.string().required())
 			)
 				.valueOf()
 		}
 	};
 
 	fastify.get("/live", { config: options.config, schema: schema }, async () => ({
-		uptime: process.uptime(),
-		serverTime: new Date().toISOString()
+		uptime: humanizeDuration(process.uptime(), { round: true }),
 	}));
 }
 

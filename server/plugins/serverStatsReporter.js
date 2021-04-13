@@ -1,6 +1,7 @@
 const fastifyPlugin = require("fastify-plugin");
 const nodeShedule = require("node-schedule");
 const fetch = require("node-fetch");
+const humanizeDuration = require("humanize-duration");
 
 const symbolServerTiming = Symbol("ServerTiming");
 
@@ -58,7 +59,7 @@ async function serverStatsReporter(fastify, options) {
 			`Resident set: ${Math.round(procMem.rss / Math.pow(1024, 2))}MB`,
 			`Total heap: ${Math.round(procMem.heapTotal / Math.pow(1024, 2))}MB`,
 			`Used heap: ${Math.round(procMem.heapUsed / Math.pow(1024, 2))}MB`,
-			`Uptime: ${uptimeProcess.humanize()}`,
+			`Uptime: ${humanizeDuration(uptimeProcess, { round: true })}`,
 		];
 
 		const apiUptime = [
