@@ -25,12 +25,12 @@ module.exports = {
 		"minPartyDps": 50000000,
 		"maxPartyDps": 250000000,
 		"maxBossHpDiffPerc": 20,
-		"authCheckHeader": "x-access-token"
+		"authCheckHeader": "X-Auth-Token"
 	},
 	"uploadAnalyze": {
 		"minMultipleTanksTriggerAmount": 2,
 		"minMultipleHealersTriggerAmount": 2,
-		"p2wAbnormals": [33, 77002, 77003, 77004, 77005, 5020013, 14400002, 14400001, 14400003, 16300015, 16300013, 5030004, 470110, 470101, 470102, 470103, 470104, 470105, 470106],
+		"p2wAbnormals": [33, 77002, 77003, 77004, 77005, 5020013, 14400002, 14400001, 14400003, 16300015, 16300013, 5030004],
 		"tankAbnormals": [10153561, 10200, 10201, 401400],
 		"roleType": {
 			"Brawler": {
