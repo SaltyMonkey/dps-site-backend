@@ -144,7 +144,8 @@ upload.statics.getTopRuns = async function (data, limit) {
 							"$player.playerServer", 0
 						]
 					},
-					"playerDps": "$members.playerDps"
+					"playerDps": "$members.playerDps",
+					"fightDuration": 1
 				}
 			}, {
 				$match: {
@@ -158,9 +159,8 @@ upload.statics.getTopRuns = async function (data, limit) {
 			}, {
 				$limit: limit
 			}
-		],
-		{ colation: { locale: "en_US", numericOrdering: true } }
-	);
+		]
+	).collation( { locale: "en_US", numericOrdering: true });
 };
 
 upload.statics.getFromDbLinked = async function (runId) {
