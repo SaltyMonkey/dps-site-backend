@@ -51,7 +51,7 @@ async function serverStatsReporter(fastify, options) {
 	});
 
 	nodeShedule.scheduleJob(cronString, async () => {
-		const uptimeProcess = process.uptime();
+		const uptimeProcess = Math.floor(process.uptime());
 		const procMem = process.memoryUsage();
 
 		const processStats = [
@@ -59,7 +59,7 @@ async function serverStatsReporter(fastify, options) {
 			`Resident set: ${Math.round(procMem.rss / Math.pow(1024, 2))}MB`,
 			`Total heap: ${Math.round(procMem.heapTotal / Math.pow(1024, 2))}MB`,
 			`Used heap: ${Math.round(procMem.heapUsed / Math.pow(1024, 2))}MB`,
-			`Uptime: ${humanizeDuration(uptimeProcess, { round: true })}`,
+			`Uptime: ${humanizeDuration(uptimeProcess * 1000, { round: true })}`,
 		];
 
 		const apiUptime = [
