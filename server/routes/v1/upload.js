@@ -108,7 +108,7 @@ async function uploadReq(fastify, options) {
 		const huntingZoneId = whitelist[payload.areaId];
 		if (!huntingZoneId || (huntingZoneId && Array.isArray(huntingZoneId) && huntingZoneId.length > 0 && !huntingZoneId.includes(payload.bossId))) return false;
 
-		//compare party dps dps
+		//compare party dps
 		const partyDps = Number(payload.partyDps);
 		if (partyDps > apiConfig.maxPartyDps || partyDps < apiConfig.minPartyDps) return false;
 
@@ -117,7 +117,7 @@ async function uploadReq(fastify, options) {
 
 		//check validity of uploader
 		const uploader = Number(payload.uploader);
-		if ( uploader > payload.members.length || uploader< 0) return false;
+		if ( uploader > payload.members.length || uploader < 0) return false;
 		
 		//check debuffs
 		if (!Array.isArray(payload.debuffDetail) || (Array.isArray(payload.debuffDetail) && payload.debuffDetail.length === 0)) return false;
