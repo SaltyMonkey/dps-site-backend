@@ -64,12 +64,12 @@ upload.statics.getLatestRuns = async function (searchParams, amount) {
 		"isMultipleTanks": 1,
 		"isMultipleHeals": 1,
 		"partyDps": 1,
-		"members.playerClass": 1,
+		"members.userData.playerClass": 1,
 		"members.playerDps": 1,
-		"members.playerServer": 1,
-		"members.playerServerId": 1,
-		"members.playerId": 1,
-		"members.playerName": 1
+		"members.userData.playerServer": 1,
+		"members.userData.playerServerId": 1,
+		"members.userData.playerId": 1,
+		"members.userData.playerName": 1
 	}).sort({ "encounterUnixEpoch": -1 }).limit(amount).lean({ autopopulate: true });
 	return runs || [];
 };

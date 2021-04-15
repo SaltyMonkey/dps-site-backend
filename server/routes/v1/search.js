@@ -239,28 +239,28 @@ async function searchReq(fastify, options) {
 		delete params.timeRange;
 
 		if (params.playerClass || params.playerServer || params.playerName || params.playerServerId || params.playerName) { 
-			params["members.userData"] = { "$elemMatch": { }};
+			params["members"] = { "$elemMatch": { }};
 			if(params.playerClass) {
-				params["members.userData"]["$elemMatch"]["playerClass"] = params.playerClass;
+				params["members"]["$elemMatch"]["userData.playerClass"] = params.playerClass;
 				delete params.playerClass;
 			}
 			if (params.playerServer) {
-				params["members.userData"]["$elemMatch"]["playerServer"] = params.playerServer;
+				params["members"]["$elemMatch"]["userData.playerServer"] = params.playerServer;
 				delete params.playerServer;
 			}
 			if (params.playerServerId) {
-				params["members.userData"]["$elemMatch"]["playerServerId"] = params.playerServerId;
+				params["members"]["$elemMatch"]["userData.playerServerId"] = params.playerServerId;
 				delete params.playerServerId;
 			}
 			if (params.playerName) {
-				params["members.userData"]["$elemMatch"]["playerName"] = params.playerName;
+				params["members"]["$elemMatch"]["userData.playerName"] = params.playerName;
 				delete params.playerName;
 			}
 		}
 
 		const [dbError, res] = await fastify.to(fastify.uploadModel.getLatestRuns(params, apiConfig.recentRunsAmount));
 		if (dbError) throw fastify.httpErrors.internalServerError(strings.DBERRSTR);
-
+		
 		if (res) {
 			for (let j = 0; j < res.length; j++) {
 				const run = res[j];
@@ -280,7 +280,6 @@ async function searchReq(fastify, options) {
 		delete params.timeRange;
 		
 		const [dbError, res] = await fastify.to(fastify.uploadModel.getTopRuns(params, apiConfig.topPlacesAmount));
-		console.log(dbError);
 		if (dbError) throw fastify.httpErrors.internalServerError(strings.DBERRSTR);
 
 		return res;
