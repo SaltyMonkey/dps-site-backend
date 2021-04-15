@@ -104,7 +104,7 @@ async function uploadReq(fastify, options) {
 		//allowed time diff 
 		if (timeDataDiff > apiConfig.maxAllowedTimeDiffSec)
 			return {
-				reason: "time diff",
+				reason: `time diff (server ${currServerTimeSec}, client ${payload.encounterUnixEpoch}, diff ${timeDataDiff})`,
 				status: false
 			};
 		
