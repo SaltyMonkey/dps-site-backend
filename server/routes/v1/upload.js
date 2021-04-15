@@ -36,7 +36,7 @@ async function uploadReq(fastify, options) {
 	const whitelist = options.whitelist;
 	const regions = options.regions;
 	const analyze = options.analyze;
-	const authHeader = options.apiConfig.authCheckHeader;
+	const authHeader = options.apiConfig.authCheckHeader.toLowerCase();
 
 	const uploadsCache = new NodeCache({ stdTTL: apiConfig.maxAllowedTimeDiffSec, checkperiod: 30, useClones: false });
 
@@ -215,11 +215,10 @@ async function uploadReq(fastify, options) {
 	};
 
 	const isAuthTokenInDb = async (headers) => {
-		const authHeader = headers[authHeader].toString().trim();
+		const hd = headers[authHeader].toString().trim();
+		if(!hd) return false;
 
-		if(!authHeader) return false;
-
-		return !!(await fastify.apiModel.getFromDb(authHeader));
+		return await fastify.apiModel.getFromDb(hd);
 	};
 
 	fastify.post("/upload", { prefix, config: options.config, schema }, async (req) => {
@@ -228,6 +227,7 @@ async function uploadReq(fastify, options) {
 
 		if (!apiConfig.allowAnonymousUpload) {
 			const [authCheckDbError, dbres] = await fastify.to(isAuthTokenInDb(headers));
+			console.log(dbres);
 			if (authCheckDbError) fastify.httpErrors.forbidden(strings.DBERRSTR);
 			if (!dbres) throw fastify.httpErrors.forbidden(strings.AUTHERRSTR);
 		}
