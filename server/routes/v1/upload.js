@@ -99,35 +99,66 @@ async function uploadReq(fastify, options) {
 
 	const prereqsCheck = (payload) => {
 		const currServerTimeSec = Date.now() / 1000;
-		const timeDataDiff = currServerTimeSec - payload.encounterUnixEpoch;
+		const timeDataDiff = Math.abs(Math.round(currServerTimeSec) - Math.round(payload.encounterUnixEpoch));
 
 		//allowed time diff 
-		if (timeDataDiff > apiConfig.maxAllowedTimeDiffSec || timeDataDiff < 0) return false;
+		if (timeDataDiff > apiConfig.maxAllowedTimeDiffSec)
+			return {
+				reason: "time diff",
+				status: false
+			};
 		
 		//allowed huntingZone and boss
 		const huntingZoneId = whitelist[payload.areaId];
-		if (!huntingZoneId || (huntingZoneId && Array.isArray(huntingZoneId) && huntingZoneId.length > 0 && !huntingZoneId.includes(payload.bossId))) return false;
-
+		if (!huntingZoneId || (huntingZoneId && Array.isArray(huntingZoneId) && huntingZoneId.length > 0 && !huntingZoneId.includes(payload.bossId))) {
+			return {
+				reason: "invalid hunting zone id/boss",
+				status: false
+			};
+		}
 		//compare party dps
 		const partyDps = Number(payload.partyDps);
-		if (partyDps > apiConfig.maxPartyDps || partyDps < apiConfig.minPartyDps) return false;
+		if (partyDps > apiConfig.maxPartyDps || partyDps < apiConfig.minPartyDps) 
+			return {
+				reason: "party dps is out of bounds",
+				status: false
+			};
 
 		//compare members amounts
-		if (payload.members.length < apiConfig.minMembersCount || payload.members.length > apiConfig.maxMembersCount) return false;
+		if (payload.members.length < apiConfig.minMembersCount || payload.members.length > apiConfig.maxMembersCount) 
+			return {
+				reason: "members count out of bound",
+				status: false
+			};
 
 		//check validity of uploader
 		const uploader = Number(payload.uploader);
-		if ( uploader > payload.members.length || uploader < 0) return false;
+		if ( uploader > payload.members.length || uploader < 0)
+			return {
+				reason: "fake uploader",
+				status: false
+			};
 		
 		//check debuffs
-		if (!Array.isArray(payload.debuffDetail) || (Array.isArray(payload.debuffDetail) && payload.debuffDetail.length === 0)) return false;
+		if (!Array.isArray(payload.debuffDetail) || (Array.isArray(payload.debuffDetail) && payload.debuffDetail.length === 0)) 
+			return {
+				reason: "no debuffs spotted",
+				status: false
+			};
 
 		//check buffs 
 		payload.members.forEach( member => {
-			if (!Array.isArray(member.buffDetail) || (Array.isArray(member.buffDetail) && member.buffDetail.length === 0)) return false;
+			if (!Array.isArray(member.buffDetail) || (Array.isArray(member.buffDetail) && member.buffDetail.length === 0)) 
+				return {
+					reason: "no buffs spotted",
+					status: false
+				};
 		});
 
-		return true;
+		return {
+			reason: "ok",
+			status: true
+		};
 	};
 
 	const analyzePayload = (payload) => {
@@ -232,7 +263,8 @@ async function uploadReq(fastify, options) {
 		}
 
 		//basic validation of data
-		if (!prereqsCheck(payload)) throw fastify.httpErrors.forbidden(strings.UPLOADLOADERRSTR);
+		let check = prereqsCheck(payload);
+		if (!check.status) throw fastify.httpErrors.forbidden(`${strings.UPLOADLOADERRSTR } ${ check.reason}`);
 		//Fast check in cache by uniq string gathered in payload without accessing database
 		if (isPlacedInCache(generateUniqKey(payload))) 
 			throw fastify.httpErrors.forbidden(strings.UPLOADDUPERRSTR);
