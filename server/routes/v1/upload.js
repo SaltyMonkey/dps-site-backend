@@ -227,7 +227,6 @@ async function uploadReq(fastify, options) {
 
 		if (!apiConfig.allowAnonymousUpload) {
 			const [authCheckDbError, dbres] = await fastify.to(isAuthTokenInDb(headers));
-			console.log(dbres);
 			if (authCheckDbError) fastify.httpErrors.forbidden(strings.DBERRSTR);
 			if (!dbres) throw fastify.httpErrors.forbidden(strings.AUTHERRSTR);
 		}
