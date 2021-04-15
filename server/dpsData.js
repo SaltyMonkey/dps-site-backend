@@ -15,7 +15,7 @@ const serversShapeConverter = () => {
 
 module.exports = {
 	"apiConfig": {
-		"allowAnonymousUpload": true,
+		"allowAnonymousUpload": false,
 		"maxAllowedTimeDiffSec": 180,
 		"maxDurationSec": 1800,
 		"topPlacesAmount": 100,
