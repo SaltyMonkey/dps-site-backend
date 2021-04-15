@@ -22,7 +22,7 @@ module.exports = {
 		"recentRunsAmount": 55,
 		"minMembersCount": 3,
 		"maxMembersCount": 30,
-		"minPartyDps": 50000000,
+		"minPartyDps": 2000000,
 		"maxPartyDps": 250000000,
 		"maxBossHpDiffPerc": 20,
 		"authCheckHeader": "X-Auth-Token"
