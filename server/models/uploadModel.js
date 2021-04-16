@@ -91,6 +91,7 @@ upload.statics.getLatestRuns = async function (data, amount) {
 				"isMultipleHeals": 1,
 				"isMultipleTanks": 1,
 				"isShame": 1,
+				"partyDps": 1,
 				"members.userData": 1,
 				"members.playerDps": 1,
 				"members.roleType": 1
