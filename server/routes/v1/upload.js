@@ -118,9 +118,9 @@ async function uploadReq(fastify, options) {
 		}
 		//compare party dps
 		const partyDps = Number(payload.partyDps);
-		if (partyDps > apiConfig.maxPartyDps || partyDps < apiConfig.minPartyDps) 
+		if (partyDps < apiConfig.minPartyDps) 
 			return {
-				reason: "party dps is out of bounds",
+				reason: "party dps is low",
 				status: false
 			};
 
@@ -276,7 +276,8 @@ async function uploadReq(fastify, options) {
 		const analyzeRes = analyzePayload(payload);
 		//create db view
 		let dbView = new fastify.uploadModel(payload);
-		dbView.runId = readableIdGenerator.generate();
+		const runId = readableIdGenerator.generate();
+		dbView.runId = runId;
 		dbView.region = analyzeRes.region;
 		dbView.huntingZoneId = payload.areaId;
 		dbView.uploader = uploader;
@@ -299,7 +300,7 @@ async function uploadReq(fastify, options) {
 		const [saveUploadDbError, res] = await fastify.to(dbView.save());
 		if (saveUploadDbError) throw fastify.httpErrors.internalServerError(strings.DBERRSTR);
 
-		return { status: status.OK };
+		return { id: `https://teralogs.com/details/${runId}` };
 	});
 }
 
