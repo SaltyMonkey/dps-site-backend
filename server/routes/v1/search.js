@@ -31,8 +31,8 @@ async function searchReq(fastify, options) {
 			.prop("isP2WConsums", S.boolean())
 			.prop("isMultipleHeals", S.boolean())
 			.prop("isMultipleTanks", S.boolean())
-			.prop("playerId", S.integer())
-			.prop("playerServerId", S.integer())
+			//.prop("playerId", S.integer())
+			//.prop("playerServerId", S.integer())
 			.prop("playerServer", S.string())
 			.prop("playerName", S.string())
 		)
@@ -60,8 +60,8 @@ async function searchReq(fastify, options) {
 								.prop("playerDps", S.string().required())
 								.prop("playerName", S.string().required())
 								.prop("playerServer", S.string().required())
-								.prop("playerServerId", S.integer().required())
-								.prop("playerId", S.integer().required())
+								//.prop("playerServerId", S.integer().required())
+								//.prop("playerId", S.integer().required())
 						))
 				)
 				.valueOf()
@@ -99,8 +99,8 @@ async function searchReq(fastify, options) {
 								.prop("playerDps", S.string().required())
 								.prop("playerName", S.string().required())
 								.prop("playerServer", S.string().required())
-								.prop("playerServerId", S.integer().required())
-								.prop("playerId", S.integer().required())
+							//	.prop("playerServerId", S.integer().required())
+							//	.prop("playerId", S.integer().required())
 						))
 				)
 				.valueOf()
@@ -220,15 +220,6 @@ async function searchReq(fastify, options) {
 		const [dbError, res] = await fastify.to(fastify.uploadModel.getLatestRuns(params, apiConfig.recentRunsAmount));
 		if (dbError) throw fastify.httpErrors.internalServerError(strings.DBERRSTR);
 
-		if (res) {
-			for (let j = 0; j < res.length; j++) {
-				const run = res[j];
-				for (let i = 0; i < run.members.length; i++) {
-					run.members[i] = { ...run.members[i], ...run.members[i].userData };
-				}
-			}
-		}
-
 		return res || [];
 	});
 
@@ -237,26 +228,6 @@ async function searchReq(fastify, options) {
 
 		params.encounterUnixEpoch = timeRangeConvert(params.timeRange);
 		delete params.timeRange;
-
-		if (params.playerClass || params.playerServer || params.playerName || params.playerServerId || params.playerName) { 
-			params["members"] = { "$elemMatch": { }};
-			if(params.playerClass) {
-				params["members"]["$elemMatch"]["userData.playerClass"] = params.playerClass;
-				delete params.playerClass;
-			}
-			if (params.playerServer) {
-				params["members"]["$elemMatch"]["userData.playerServer"] = params.playerServer;
-				delete params.playerServer;
-			}
-			if (params.playerServerId) {
-				params["members"]["$elemMatch"]["userData.playerServerId"] = params.playerServerId;
-				delete params.playerServerId;
-			}
-			if (params.playerName) {
-				params["members"]["$elemMatch"]["userData.playerName"] = params.playerName;
-				delete params.playerName;
-			}
-		}
 
 		const [dbError, res] = await fastify.to(fastify.uploadModel.getLatestRuns(params, apiConfig.recentRunsAmount));
 		if (dbError) throw fastify.httpErrors.internalServerError(strings.DBERRSTR);
