@@ -88,7 +88,8 @@ upload.statics.getTopRuns = async function (data, limit) {
 		}
 	};
 	if(data.roleType) {
-		matchStage["$match"]["roleType"] = data.roleType;
+		matchStage["$match"]["members.roleType"] = data.roleType;
+		delete data.roleType;
 	}
 
 	return await this.aggregate(
