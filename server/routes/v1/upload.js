@@ -93,7 +93,11 @@ async function uploadReq(fastify, options) {
 		)
 			.valueOf(),
 		response: {
-			"2xx": fastify.getSchema("statusResSchema")
+			"2xx": (
+				S.object()
+					.prop("id", S.string())
+			)
+				.valueOf(),
 		}
 	};
 
