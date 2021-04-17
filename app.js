@@ -11,7 +11,10 @@ const dpsData = require("./server/dpsData.js");
 const convertWhitelistInObject = (whitelist) => {
 	let objView = {};
 	whitelist.forEach(element => {
-		objView[element.AreaId] = element.BossIds;
+		objView[element.AreaId] = {
+			bosses: element.BossIds,
+			hp: element.Hp
+		};
 	});
 
 	return objView;

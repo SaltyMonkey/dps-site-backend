@@ -19,7 +19,7 @@ module.exports = {
 		"maxAllowedTimeDiffSec": 180,
 		"maxDurationSec": 1800,
 		"topPlacesAmount": 100,
-		"recentRunsAmount": 55,
+		"recentRunsAmount": 35,
 		"minMembersCount": 3,
 		"maxMembersCount": 30,
 		"minPartyDps": 2000000,

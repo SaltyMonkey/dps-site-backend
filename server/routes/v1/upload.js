@@ -114,12 +114,25 @@ async function uploadReq(fastify, options) {
 		
 		//allowed huntingZone and boss
 		const huntingZoneId = whitelist[payload.areaId];
-		if (!huntingZoneId || (huntingZoneId && Array.isArray(huntingZoneId) && huntingZoneId.length > 0 && !huntingZoneId.includes(payload.bossId))) {
+		if (!huntingZoneId || !huntingZoneId.bosses || (huntingZoneId && huntingZoneId.bosses && Array.isArray(huntingZoneId.bosses) && huntingZoneId.bosses.length > 0 && !huntingZoneId.bosses.includes(payload.bossId))) {
 			return {
 				reason: "invalid hunting zone id/boss",
 				status: false
 			};
 		}
+		
+		//check damage validity 
+		const totalDmg = payload.members.reduce((prev, cur) => prev + Number(cur.playerTotalDamage), 0);
+		const bossHp = huntingZoneId.hp[huntingZoneId.bosses.indexOf(payload.bossId)];
+		if(totalDmg && bossHp) {
+			if(Math.abs(bossHp - totalDmg) > Math.round((bossHp/100) * 18)) {
+				return {
+					reason: "Difference between registered and expected dmg out of bounds",
+					status: false
+				};
+			}
+		}
+
 		//compare party dps
 		const partyDps = Number(payload.partyDps);
 		if (partyDps < apiConfig.minPartyDps) 
