@@ -1,8 +1,8 @@
 module.exports = {
 	data: {
-		eu: ["Mystel", "Yurian", "Seren"],
+		eu: ["Mystel", "Yurian", "Seren", "Shakan"],
 		na: ["Velik", "Kaia"],
-		ru: ["Shakan"]
+		sea: ["Shen"]
 	},
 	default: "eu"
 };
