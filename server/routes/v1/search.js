@@ -6,6 +6,13 @@ const roles = require("../../enums/classRoles");
 const time = require("../../enums/time");
 const strings = require("../../enums/strings");
 const luxon = require("luxon");
+const NodeCache = require("node-cache");
+const hasher = require("node-object-hash")({ alg: "sha1"});
+
+const isPlacedInCache = (cache, key) => cache.has(key);
+const getPlacedInCache = (cache, key) => cache.get(key);
+const setInCache = (cache, key, val) => cache.set(key, val);
+const generateKeyFromRequest = (obj) => hasher(obj);
 
 /**
  * Search routes
@@ -15,6 +22,9 @@ const luxon = require("luxon");
 async function searchReq(fastify, options) {
 	const apiConfig = options.apiConfig;
 	const regionsList = options.regionsList;
+
+	const latestCache = new NodeCache({ stdTTL: apiConfig.latestCacheTimeSecs, checkperiod: apiConfig.latestCacheTimeSecs / 3, useClones: false });
+	const searchCache = new NodeCache({ stdTTL: apiConfig.searchCacheTimeSecs, checkperiod: apiConfig.searchCacheTimeSecs / 3, useClones: false });
 
 	const schemaRecent = {
 		body: (S.object()
@@ -215,16 +225,23 @@ async function searchReq(fastify, options) {
 	};
 
 	fastify.post("/search/latest", { prefix: options.prefix, config: options.config, schema: schemaLatest }, async (req) => {
-		let params = { ...req.body };
-
+		if(isPlacedInCache(latestCache, req.body.region)) return getPlacedInCache(latestCache, req.body.region);
+		
+		let params = req.body;
+	
 		const [dbError, res] = await fastify.to(fastify.uploadModel.getLatestRuns(params, apiConfig.recentRunsAmount));
 		if (dbError) throw fastify.httpErrors.internalServerError(strings.DBERRSTR);
+
+		setInCache(latestCache, params.region, res);
 
 		return res || [];
 	});
 
 	fastify.post("/search/recent", { prefix: options.prefix, config: options.config, schema: schemaRecent }, async (req) => {
-		let params = { ...req.body };
+		const reqHash = generateKeyFromRequest(req.body);
+		if(isPlacedInCache(searchCache, reqHash)) return getPlacedInCache(searchCache, reqHash);
+		
+		let params = req.body;
 
 		params.encounterUnixEpoch = timeRangeConvert(params.timeRange);
 		delete params.timeRange;
@@ -239,13 +256,15 @@ async function searchReq(fastify, options) {
 					run.members[i] = { ...run.members[i], ...run.members[i].userData };
 				}
 			}
+
+			setInCache(searchCache, reqHash, res);
 		}
 
 		return res || [];
 	});
 
 	fastify.post("/search/top", { prefix: options.prefix, config: options.config, schema: schemaByTop }, async (req) => {
-		let params = { ...req.body };
+		let params = req.body;
 
 		params.encounterUnixEpoch = timeRangeConvert(params.timeRange);
 		delete params.timeRange;
@@ -257,7 +276,7 @@ async function searchReq(fastify, options) {
 	});
 
 	fastify.post("/search/id", { prefix: options.prefix, config: options.config, schema: schemaFull }, async (req) => {
-		const id = req.body.runId.toString().trim();
+		const id = req.body.runId.trim();
 
 		const [dbError, res] = await fastify.to(fastify.uploadModel.getCompleteRun(id));
 		if (dbError) throw fastify.httpErrors.internalServerError(strings.DBERRSTR);
