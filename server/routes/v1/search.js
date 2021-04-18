@@ -7,12 +7,12 @@ const time = require("../../enums/time");
 const strings = require("../../enums/strings");
 const luxon = require("luxon");
 const NodeCache = require("node-cache");
-const hasher = require("node-object-hash")({ alg: "sha1"});
+const hasher = require("node-object-hash")({ alg: "sha1" });
 
 const isPlacedInCache = (cache, key) => cache.has(key);
 const getPlacedInCache = (cache, key) => cache.get(key);
 const setInCache = (cache, key, val) => cache.set(key, val);
-const generateKeyFromRequest = (obj) => hasher(obj);
+const generateKeyFromRequest = (obj) => hasher.hash(obj);
 
 /**
  * Search routes
@@ -225,13 +225,17 @@ async function searchReq(fastify, options) {
 	};
 
 	fastify.post("/search/latest", { prefix: options.prefix, config: options.config, schema: schemaLatest }, async (req) => {
-		if(isPlacedInCache(latestCache, req.body.region)) return getPlacedInCache(latestCache, req.body.region);
-		
+		if(isPlacedInCache(latestCache, req.body.region)) {
+			//console.log("cache hit");
+			return getPlacedInCache(latestCache, req.body.region);
+		}
+		//console.log("fresh hit");
 		let params = req.body;
 	
 		const [dbError, res] = await fastify.to(fastify.uploadModel.getLatestRuns(params, apiConfig.recentRunsAmount));
 		if (dbError) throw fastify.httpErrors.internalServerError(strings.DBERRSTR);
 
+		//console.log("place in cache");
 		setInCache(latestCache, params.region, res);
 
 		return res || [];
@@ -239,8 +243,11 @@ async function searchReq(fastify, options) {
 
 	fastify.post("/search/recent", { prefix: options.prefix, config: options.config, schema: schemaRecent }, async (req) => {
 		const reqHash = generateKeyFromRequest(req.body);
-		if(isPlacedInCache(searchCache, reqHash)) return getPlacedInCache(searchCache, reqHash);
-		
+		if(isPlacedInCache(searchCache, reqHash)) {
+			//console.log("cache hit");
+			return getPlacedInCache(searchCache, reqHash);
+		}
+		//console.log("fresh hit");
 		let params = req.body;
 
 		params.encounterUnixEpoch = timeRangeConvert(params.timeRange);
@@ -256,7 +263,7 @@ async function searchReq(fastify, options) {
 					run.members[i] = { ...run.members[i], ...run.members[i].userData };
 				}
 			}
-
+			//console.log("place in cache");
 			setInCache(searchCache, reqHash, res);
 		}
 
