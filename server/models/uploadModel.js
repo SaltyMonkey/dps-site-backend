@@ -238,7 +238,7 @@ upload.statics.getTopRuns = async function (data, limit) {
 			{
 				"$group": {
 					_id: "$playerId",
-					dps: { "$addToSet": { playerDps: "$playerDps", runId: "$runId"} }, 
+					dps: { "$addToSet": { playerDps: "$playerDps", runId: "$runId", fightDuration: "$fightDuration"} }, 
 					playerName: { $first: "$playerName" },
 					playerClass: { $first: "$playerClass" },
 					playerServer: { $first: "$playerServer" }
@@ -271,6 +271,11 @@ upload.statics.getTopRuns = async function (data, limit) {
 					"runId": {
 						"$arrayElemAt": [
 							"$playerDps.runId", 0
+						]
+					},
+					"fightDuration": {
+						"$arrayElemAt": [
+							"$playerDps.fightDuration", 0
 						]
 					},
 				}
