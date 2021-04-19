@@ -1,5 +1,11 @@
 module.exports = [
 	{
+		"AreaId": 3023,
+		"BossIds": [2000],
+		"Hp": [5144000000],
+		"Size": 5
+	},
+	{
 		"AreaId": 3206,
 		"BossIds": [1000],
 		"Hp": [38045347616],
@@ -36,16 +42,9 @@ module.exports = [
 		"Size": 5
 	},
 	{
-		"AreaId": 950,
-		"BossIds": [4000],
-		"Hp": [66832800000],
-		"Size": 20
-	},
-	{
 		"AreaId": 3103,
 		"BossIds": [1000],
 		"Hp": [21066325086],
-		"Ver": 1,
 		"Size": 5
 	},
 	{
