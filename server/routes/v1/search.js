@@ -126,7 +126,6 @@ async function searchReq(fastify, options) {
 			.prop("huntingZoneId", S.integer().minimum(0).required())
 			.prop("bossId", S.integer().minimum(0).required())
 			.prop("playerClass", S.string().enum(Object.values(classes)).required())
-			.prop("playerServer", S.string().required())
 			.prop("timeRange", S.string().enum(Object.values(time)).required())
 			.prop("roleType", S.integer().enum(Object.values(roles)))		
 		)

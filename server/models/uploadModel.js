@@ -165,6 +165,17 @@ upload.statics.getTopRuns = async function (data, limit) {
 		delete data.roleType;
 	}
 
+	let matchCaseSecond = {
+		$match: {
+			playerClass: data.playerClass,
+		}
+	};
+
+	if(data.playerServer) {
+		matchCaseSecond["$match"]["playerServer"] = data.playerServer;
+		delete data.playerServer;
+	}
+
 	return await this.aggregate(
 		[
 			{
@@ -214,15 +225,57 @@ upload.statics.getTopRuns = async function (data, limit) {
 							"$player.playerServer", 0
 						]
 					},
+					"playerId": {
+						"$arrayElemAt": [
+							"$player._id", 0
+						]
+					},
 					"playerDps": "$members.playerDps",
 					"fightDuration": 1
 				}
-			}, {
-				$match: {
-					playerClass: data.playerClass,
-					playerServer: data.playerServer
+			}, 
+			matchCaseSecond,
+			{
+				"$group": {
+					_id: "$playerId",
+					dps: { "$addToSet": { playerDps: "$playerDps", runId: "$runId"} }, 
+					playerName: { $first: "$playerName" },
+					playerClass: { $first: "$playerClass" },
+					playerServer: { $first: "$playerServer" }
 				}
-			}, {
+			},
+			{
+				$project: {
+					playerName:  "$playerName" ,
+					playerClass:  "$playerClass" ,
+					playerServer:  "$playerServer",
+					playerDps: {
+						$filter: {
+							input: "$dps",
+							as: "item",
+							cond: { $eq: ["$$item.playerDps", { $max: "$dps.playerDps" }] }
+						}
+					}
+				}
+			},
+			{
+				$project: {
+					"playerName": 1,
+					"playerClass": 1,
+					"playerServer": 1,
+					"playerDps": {
+						"$arrayElemAt": [
+							"$playerDps.playerDps", 0
+						]
+					},
+					"runId": {
+						"$arrayElemAt": [
+							"$playerDps.runId", 0
+						]
+					},
+				}
+			},
+			{
 				$sort: {
 					playerDps: -1
 				}
