@@ -53,6 +53,7 @@ const upload = new mongoose.Schema({
 upload.plugin(require("mongoose-autopopulate"));
 
 upload.statics.getLatestRuns = async function (data, amount) {
+	console.log(data);
 	let matchStage = {
 		$match: {
 			region: data.region
@@ -70,13 +71,12 @@ upload.statics.getLatestRuns = async function (data, amount) {
 	if(data.hasOwnProperty("isMultipleHeals")) matchStage["$match"].isShame = data.isShame;
 	// eslint-disable-next-line no-prototype-builtins
 	if(data.hasOwnProperty("isMultipleTanks")) matchStage["$match"].isP2WConsums = data.isP2WConsums;
-	if(data.roleType) matchStage["$match"]["members.roleType"] = data.roleType;
 
-	let postMatchStep = { $elemMatch: {}};
+	let postMatchStep = { $match: {"members": { $elemMatch: {}}}};
 
-	if(data.playerName) postMatchStep["$elemMatch"].playerClass = data.playerClass;
-	if(data.playerServer) postMatchStep["$elemMatch"].playerServer = data.playerServer;
-	if(data.playerClass) postMatchStep["$elemMatch"].playerClass = data.playerClass;
+	if(data.playerClass) postMatchStep["$match"]["members"]["$elemMatch"].playerClass = data.playerClass;
+	if(data.playerServer) postMatchStep["$match"]["members"]["$elemMatch"].playerServer = data.playerServer;
+	if(data.roleType) postMatchStep["$match"]["members"]["$elemMatch"].roleType = data.roleType;
 
 	let agregationTemplate = [
 		{
@@ -99,7 +99,7 @@ upload.statics.getLatestRuns = async function (data, amount) {
 		},
 		matchStage,
 		{
-			"$unwind": "$members"
+			"$unwind": { "path": "$members" }
 		},
 		{
 			"$lookup": {
@@ -110,7 +110,7 @@ upload.statics.getLatestRuns = async function (data, amount) {
 			}
 		},
 		{
-			$unwind: "$player"
+			$unwind: { path: "$player" }
 		},
 		{
 			$addFields: {
@@ -139,7 +139,7 @@ upload.statics.getLatestRuns = async function (data, amount) {
 		}
 	];
 
-	if(Object.keys(postMatchStep["$elemMatch"]) > 0) agregationTemplate.push(postMatchStep);
+	if(Object.keys(postMatchStep["$match"]["members"]["$elemMatch"]).length > 0) agregationTemplate.push(postMatchStep);
 	return await this.aggregate(agregationTemplate).sort({ "encounterUnixEpoch": -1 }).limit(amount);
 };
 
@@ -160,10 +160,6 @@ upload.statics.getTopRuns = async function (data, limit) {
 			isShame: false
 		}
 	};
-	if(data.roleType) {
-		matchStage["$match"]["members.roleType"] = data.roleType;
-		delete data.roleType;
-	}
 
 	let matchCaseSecond = {
 		$match: {
@@ -174,6 +170,10 @@ upload.statics.getTopRuns = async function (data, limit) {
 	if(data.playerServer) {
 		matchCaseSecond["$match"]["playerServer"] = data.playerServer;
 		delete data.playerServer;
+	}
+	if(data.roleType) {
+		matchCaseSecond["$match"]["roleType"] = data.roleType;
+		delete data.roleType;
 	}
 
 	return await this.aggregate(
@@ -231,6 +231,7 @@ upload.statics.getTopRuns = async function (data, limit) {
 						]
 					},
 					"playerDps": "$members.playerDps",
+					"roleType": "$members.roleType",
 					"fightDuration": 1
 				}
 			}, 

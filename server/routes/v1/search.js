@@ -266,7 +266,6 @@ async function searchReq(fastify, options) {
 			//console.log("place in cache");
 			setInCache(searchCache, reqHash, res);
 		}
-
 		return res || [];
 	});
 
