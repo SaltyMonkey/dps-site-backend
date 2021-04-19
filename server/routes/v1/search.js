@@ -25,6 +25,7 @@ async function searchReq(fastify, options) {
 
 	const latestCache = new NodeCache({ stdTTL: apiConfig.latestCacheTimeSecs, checkperiod: apiConfig.latestCacheTimeSecs / 3, useClones: false });
 	const searchCache = new NodeCache({ stdTTL: apiConfig.searchCacheTimeSecs, checkperiod: apiConfig.searchCacheTimeSecs / 3, useClones: false });
+	const topCache = new NodeCache({ stdTTL: apiConfig.topCacheTimeSecs, checkperiod: apiConfig.topCacheTimeSecs / 6, useClones: false });
 
 	const schemaRecent = {
 		body: (S.object()
@@ -270,6 +271,11 @@ async function searchReq(fastify, options) {
 	});
 
 	fastify.post("/search/top", { prefix: options.prefix, config: options.config, schema: schemaByTop }, async (req) => {
+		const reqHash = generateKeyFromRequest(req.body);
+		if(isPlacedInCache(topCache, reqHash)) {
+			return getPlacedInCache(topCache, reqHash);
+		}
+
 		let params = req.body;
 
 		params.encounterUnixEpoch = timeRangeConvert(params.timeRange);
@@ -277,6 +283,8 @@ async function searchReq(fastify, options) {
 		
 		const [dbError, res] = await fastify.to(fastify.uploadModel.getTopRuns(params, apiConfig.topPlacesAmount));
 		if (dbError) throw fastify.httpErrors.internalServerError(strings.DBERRSTR);
+
+		setInCache(topCache, reqHash, res);
 
 		return res;
 	});
