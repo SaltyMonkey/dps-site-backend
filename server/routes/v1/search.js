@@ -170,6 +170,7 @@ async function searchReq(fastify, options) {
 				.prop("debuffDetail", S.array().required())
 				.prop("isShame", S.boolean().required())
 				.prop("isP2WConsums", S.boolean())
+				.prop("uploader", S.string().required())
 				.prop("members", S.array().required().items(
 					S.object()
 						.prop("playerClass", S.string().enum(Object.values(classes)).required())
@@ -296,6 +297,8 @@ async function searchReq(fastify, options) {
 		if(!res) throw fastify.httpErrors.notFound(strings.NOTFOUNDERRSTR);
 		
 		if (res) {
+			res.uploader = res.uploader.playerName;
+			
 			for (let i = 0; i < res.members.length; i++) {
 				res.members[i] = { ...res.members[i], ...res.members[i].userData };
 			}
