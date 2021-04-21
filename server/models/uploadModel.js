@@ -53,7 +53,7 @@ const upload = new mongoose.Schema({
 upload.plugin(require("mongoose-autopopulate"));
 
 upload.statics.getLatestRuns = async function (data, amount) {
-	console.log(data);
+	//console.log(data);
 	let matchStage = {
 		$match: {
 			region: data.region
