@@ -147,6 +147,135 @@ upload.statics.getCompleteRun = async function (id) {
 	return await (this.findOne({ runId: id })).lean({ autopopulate: true });
 };
 
+upload.statics.getTopTodayRuns = async function (data, limit) {
+	let matchStage = {
+		$match: {
+			region: data.region,
+			bossId: data.bossId,
+			huntingZoneId: data.huntingZoneId,
+			encounterUnixEpoch: data.encounterUnixEpoch,
+			isP2WConsums: false,
+			isMultipleHeals: false,
+			isMultipleTanks: false,
+			isShame: false
+		}
+	};
+
+	return await this.aggregate(
+		[
+			{
+				"$project": {
+					"region": 1,
+					"runId": 1,
+					"bossId": 1,
+					"huntingZoneId": 1,
+					"encounterUnixEpoch": 1,
+					"fightDuration": 1,
+					"isP2WConsums": 1,
+					"isMultipleHeals": 1,
+					"isMultipleTanks": 1,
+					"isShame": 1,
+					"members.userData": 1,
+					"members.playerDps": 1,
+					"members.roleType": 1
+				}
+			}, 
+			matchStage,
+			{
+				"$unwind": {
+					"path": "$members"
+				}
+			}, {
+				"$lookup": {
+					"from": "players",
+					"localField": "members.userData",
+					"foreignField": "_id",
+					"as": "player"
+				}
+			}, {
+				"$project": {
+					"runId": 1,
+					"playerName": {
+						"$arrayElemAt": [
+							"$player.playerName", 0
+						]
+					},
+					"playerClass": {
+						"$arrayElemAt": [
+							"$player.playerClass", 0
+						]
+					},
+					"playerServer": {
+						"$arrayElemAt": [
+							"$player.playerServer", 0
+						]
+					},
+					"playerId": {
+						"$arrayElemAt": [
+							"$player._id", 0
+						]
+					},
+					"playerDps": "$members.playerDps",
+					"roleType": "$members.roleType",
+					"fightDuration": 1
+				}
+			},
+			{
+				"$group": {
+					_id: "$playerId",
+					dps: { "$addToSet": { playerDps: "$playerDps", runId: "$runId", fightDuration: "$fightDuration"} }, 
+					playerName: { $first: "$playerName" },
+					playerClass: { $first: "$playerClass" },
+					playerServer: { $first: "$playerServer" }
+				}
+			},
+			{
+				$project: {
+					playerName:  "$playerName" ,
+					playerClass:  "$playerClass" ,
+					playerServer:  "$playerServer",
+					playerDps: {
+						$filter: {
+							input: "$dps",
+							as: "item",
+							cond: { $eq: ["$$item.playerDps", { $max: "$dps.playerDps" }] }
+						}
+					}
+				}
+			},
+			{
+				$project: {
+					"playerName": 1,
+					"playerClass": 1,
+					"playerServer": 1,
+					"playerDps": {
+						"$arrayElemAt": [
+							"$playerDps.playerDps", 0
+						]
+					},
+					"runId": {
+						"$arrayElemAt": [
+							"$playerDps.runId", 0
+						]
+					},
+					"fightDuration": {
+						"$arrayElemAt": [
+							"$playerDps.fightDuration", 0
+						]
+					},
+				}
+			},
+			{
+				$sort: {
+					playerDps: -1
+				}
+			}, {
+				$limit: limit
+			}
+		]
+	).collation( { locale: "en_US", numericOrdering: true });
+};
+
 upload.statics.getTopRuns = async function (data, limit) {
 	let matchStage = {
 		$match: {

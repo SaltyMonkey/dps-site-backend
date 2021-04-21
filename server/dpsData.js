@@ -26,7 +26,7 @@ module.exports = {
 		"maxBossHpDiffPerc": 20,
 		"authCheckHeader": "X-Auth-Token",
 		"latestCacheTimeSecs": 90,
-		"searchCacheTimeSecs": 60,
+		"searchCacheTimeSecs": 90,
 		"topCacheTimeSecs": 10800
 	},
 	"uploadAnalyze": {

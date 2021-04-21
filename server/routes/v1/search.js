@@ -149,6 +149,30 @@ async function searchReq(fastify, options) {
 		}
 	};
 
+	const schemaByTodayTop = {
+		body: (S.object()
+			.additionalProperties(false)
+			.prop("region", S.string().enum(regionsList).required())
+			.prop("huntingZoneId", S.integer().minimum(0).required())
+			.prop("bossId", S.integer().minimum(0).required())
+		)
+			.valueOf(),
+		response: {
+			"2xx": S.array()
+				.items(
+					S.object()
+						.additionalProperties(false)
+						.prop("runId", S.string().required())
+						.prop("fightDuration", S.string().required())
+						.prop("playerClass", S.string().required())
+						.prop("playerDps", S.string().required())
+						.prop("playerName", S.string().required())
+						.prop("playerServer", S.string().required())
+				)
+				.valueOf()
+		}
+	};
+
 	const schemaFull = {
 		body: (S.object()
 			.additionalProperties(false)
@@ -282,6 +306,24 @@ async function searchReq(fastify, options) {
 		delete params.timeRange;
 		
 		const [dbError, res] = await fastify.to(fastify.uploadModel.getTopRuns(params, apiConfig.topPlacesAmount));
+		if (dbError) throw fastify.httpErrors.internalServerError(strings.DBERRSTR);
+
+		setInCache(topCache, reqHash, res);
+
+		return res;
+	});
+
+	fastify.post("/search/tt", { prefix: options.prefix, config: options.config, schema: schemaByTodayTop }, async (req) => {
+		const reqHash = generateKeyFromRequest(req.body);
+		if(isPlacedInCache(topCache, reqHash)) {
+			return getPlacedInCache(topCache, reqHash);
+		}
+
+		let params = req.body;
+
+		params.encounterUnixEpoch = timeRangeConvert(time.DAY);
+		
+		const [dbError, res] = await fastify.to(fastify.uploadModel.getTopTodayRuns(params, 10));
 		if (dbError) throw fastify.httpErrors.internalServerError(strings.DBERRSTR);
 
 		setInCache(topCache, reqHash, res);
