@@ -257,7 +257,7 @@ async function searchReq(fastify, options) {
 		//console.log("fresh hit");
 		let params = req.body;
 	
-		const [dbError, res] = await fastify.to(fastify.uploadModel.getLatestRuns(params, apiConfig.recentRunsAmount));
+		const [dbError, res] = await fastify.to(fastify.uploadModel.getLatestRuns(params, apiConfig.latestRunsAmount));
 		if (dbError) throw fastify.httpErrors.internalServerError(strings.DBERRSTR);
 
 		//console.log("place in cache");

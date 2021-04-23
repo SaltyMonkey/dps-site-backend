@@ -74,6 +74,7 @@ upload.statics.getLatestRuns = async function (data, amount) {
 
 	let postMatchStep = { $match: {"members": { $elemMatch: {}}}};
 
+	if(data.playerName) postMatchStep["$match"]["members"]["$elemMatch"].playerName = data.playerName;
 	if(data.playerClass) postMatchStep["$match"]["members"]["$elemMatch"].playerClass = data.playerClass;
 	if(data.playerServer) postMatchStep["$match"]["members"]["$elemMatch"].playerServer = data.playerServer;
 	if(data.roleType) postMatchStep["$match"]["members"]["$elemMatch"].roleType = data.roleType;

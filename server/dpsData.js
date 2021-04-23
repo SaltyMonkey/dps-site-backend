@@ -19,14 +19,15 @@ module.exports = {
 		"maxAllowedTimeDiffSec": 180,
 		"maxDurationSec": 1800,
 		"topPlacesAmount": 100,
-		"recentRunsAmount": 35,
+		"latestRunsAmount": 35,
+		"recentRunsAmount": 60,
 		"minMembersCount": 3,
 		"maxMembersCount": 30,
 		"minPartyDps": 2000000,
 		"maxBossHpDiffPerc": 20,
 		"authCheckHeader": "X-Auth-Token",
-		"latestCacheTimeSecs": 90,
-		"searchCacheTimeSecs": 90,
+		"latestCacheTimeSecs": 60,
+		"searchCacheTimeSecs": 60,
 		"topCacheTimeSecs": 10800
 	},
 	"uploadAnalyze": {
@@ -40,7 +41,7 @@ module.exports = {
 				"default": 1
 			},
 			"Warrior": {
-				"abns": [[10200, 10201], 1],
+				"abns": [[100200, 100201], 1],
 				"default": 2
 			},
 			"Berserker": {
