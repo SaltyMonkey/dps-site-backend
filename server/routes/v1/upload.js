@@ -6,8 +6,14 @@ const readable = require("readable-url");
 
 const NodeCache = require("node-cache");
 const classes = require("../../enums/classes");
-const status = require("../../enums/statuses");
+//const status = require("../../enums/statuses");
 const strings = require("../../enums/strings");
+
+/*const fs = require("fs");
+const util = require("util");
+const path = require("path");
+const { pipeline } = require("stream");
+const pump = util.promisify(pipeline);*/
 
 // eslint-disable-next-line node/no-unpublished-require
 const readableIdGenerator = new readable(true, 5, "");
@@ -39,9 +45,14 @@ async function uploadReq(fastify, options) {
 	const authHeader = options.apiConfig.authCheckHeader.toLowerCase();
 
 	const uploadsCache = new NodeCache({ stdTTL: apiConfig.maxAllowedTimeDiffSec, checkperiod: 30, useClones: false });
+	//const timelineAccess = new NodeCache({ stdTTL: apiConfig.maxAllowedTimelineUploadTimeSec, checkperiod:apiConfig.maxAllowedTimelineTimeSec / 2, useClones: false });
 
 	const isPlacedInCache = (str) => uploadsCache.has(str);
 	const placeInCache = (str) => uploadsCache.set(str);
+
+	//const isAllowedToUploadTimeline = (str) => timelineAccess.has(str);
+	//const allowUploadTimeline = (str) => timelineAccess.set(str);
+	//const removeFromTimelineAccess = (str) => timelineAccess.del(str);
 
 	const schema = {
 		body: (S.object()
@@ -100,6 +111,21 @@ async function uploadReq(fastify, options) {
 				.valueOf(),
 		}
 	};
+
+	/*const schemaTimeline = {
+		headers: (
+			S.object()
+				.additionalProperties(false)
+				.prop(authHeader, S.string().minLength(20).maxLength(50).required())
+		)
+			.valueOf(),
+		params: (
+			S.object()
+				.additionalProperties(false)
+				.prop("id", S.string().minLength(20).maxLength(50).required())
+		)
+			.valueOf(),
+	};*/
 
 	const prereqsCheck = (payload) => {
 		const currServerTimeSec = Date.now() / 1000;
@@ -164,6 +190,7 @@ async function uploadReq(fastify, options) {
 			};
 
 		//check buffs 
+		// eslint-disable-next-line unicorn/no-array-for-each
 		payload.members.forEach( member => {
 			if (!Array.isArray(member.buffDetail) || (Array.isArray(member.buffDetail) && member.buffDetail.length === 0)) 
 				return {
@@ -185,9 +212,9 @@ async function uploadReq(fastify, options) {
 		let region = "";
 		let specialBuffs = false; 
 
-		payload.members.forEach(member => {
+		for (const member of payload.members) {
 			const pcls = member.playerClass;
-			const buffs = member.buffDetail.map(el => el[0]);
+			const buffs = member.buffDetail.map(element => element[0]);
 			deaths += member.playerDeaths;
 
 			if(arraysHasIntersect(analyze.p2wAbnormals, buffs)) specialBuffs = true;
@@ -200,7 +227,7 @@ async function uploadReq(fastify, options) {
 			}
 			else if (pcls === classes.LANCER)
 				tanksCounter += 1;
-		});
+		}
 
 		region = regions[payload.members[0].playerServer];
 		
@@ -213,13 +240,13 @@ async function uploadReq(fastify, options) {
 		};
 	};
 	
-	const controlledClasses = [classes.BRAWLER, classes.WARRIOR,classes.BERS];
+	const controlledClasses = new Set([classes.BRAWLER, classes.WARRIOR,classes.BERS]);
 	const modifyMembersArray = (members) => {
 		let membersArray = [];
-		members.forEach(item => {
+		for (const item of members) {
 			const cls = item.playerClass;
 			const buffs = item.buffDetail.map(el => el[0]);
-			if(controlledClasses.includes(cls)){
+			if(controlledClasses.has(cls)){
 				let newObj = {...item};
 				const roleType = analyze.roleType[cls];
 				if(arraysHasIntersect(roleType.abns[0], buffs))
@@ -231,7 +258,7 @@ async function uploadReq(fastify, options) {
 			else {
 				membersArray.push(item);
 			}
-		});
+		}
 
 		return membersArray;
 	};
@@ -262,19 +289,18 @@ async function uploadReq(fastify, options) {
 		return ref;
 	};
 
-	const isAuthTokenInDb = async (headers) => {
-		const hd = headers[authHeader].toString().trim();
-		if(!hd) return false;
+	const isAuthTokenInDb = async (header) => {
+		if(!header) return false;
 
-		return await fastify.apiModel.getFromDb(hd);
+		return await fastify.apiModel.getFromDb(header);
 	};
 
 	fastify.post("/upload", { prefix, config: options.config, schema }, async (req) => {
 		const payload = req.body;
-		const headers = req.headers;
+		const header = req.headers[authHeader].trim();
 
 		if (!apiConfig.allowAnonymousUpload) {
-			const [authCheckDbError, dbres] = await fastify.to(isAuthTokenInDb(headers));
+			const [authCheckDbError, dbres] = await fastify.to(isAuthTokenInDb(header));
 			if (authCheckDbError) fastify.httpErrors.forbidden(strings.DBERRSTR);
 			if (!dbres) throw fastify.httpErrors.forbidden(strings.AUTHERRSTR);
 		}
@@ -317,8 +343,42 @@ async function uploadReq(fastify, options) {
 		const [saveUploadDbError, res] = await fastify.to(dbView.save());
 		if (saveUploadDbError) throw fastify.httpErrors.internalServerError(strings.DBERRSTR);
 
-		return { id: `https://teralogs.com/details/${runId}` };
+		//allowUploadTimeline(`${header}-${runId}`);
+
+		return { 
+			id: `https://teralogs.com/details/${runId}`,
+			//timelineLink: `https://teralogs.com/v1/upload/timeline/${runId}`
+		};
 	});
+	
+	// eslint-disable-next-line unicorn/consistent-function-scoping
+	/*const isPathWithoutInvalidCharacters = (paramsPath) => {
+		if (paramsPath.indexOf("\0") !== -1 || paramsPath.indexOf("../") || paramsPath.indexOf("./") !== -1)
+			return false;
+		else 
+			return true;
+	};
+
+	fastify.post("/upload/timeline/:id", { prefix, config: options.config, schema: schemaTimeline }, async (req) => {
+		if (!req.isMultipart())	throw fastify.httpErrors.forbidden(strings.CONTENTTPERR);
+
+		const header = req.body.headers[authHeader].trim();
+		const runId = req.params.id.trim();
+
+		const key = `${header}-${runId}`;
+		
+		if (!isAllowedToUploadTimeline(key))
+			throw fastify.httpErrors.forbidden(strings.AUTHERRSTR);
+		
+		removeFromTimelineAccess(key);
+
+		const file = await req.file({ limits: { files: 1 }});
+		if (!file) throw fastify.httpErrors.forbidden(strings.NOTFOUNDERRSTR);
+
+		await pump(file.file, fs.createWriteStream(`${runId}.gzip`));
+
+		return { status: status.OK };
+	});*/
 }
 
 module.exports = uploadReq;

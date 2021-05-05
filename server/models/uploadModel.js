@@ -68,9 +68,9 @@ upload.statics.getLatestRuns = async function (data, amount) {
 	// eslint-disable-next-line no-prototype-builtins
 	if(data.hasOwnProperty("isP2WConsums")) matchStage["$match"].isP2WConsums = data.isP2WConsums;
 	// eslint-disable-next-line no-prototype-builtins
-	if(data.hasOwnProperty("isMultipleHeals")) matchStage["$match"].isShame = data.isShame;
+	if(data.hasOwnProperty("isMultipleHeals")) matchStage["$match"].isMultipleHeals = data.isMultipleHeals;
 	// eslint-disable-next-line no-prototype-builtins
-	if(data.hasOwnProperty("isMultipleTanks")) matchStage["$match"].isP2WConsums = data.isP2WConsums;
+	if(data.hasOwnProperty("isMultipleTanks")) matchStage["$match"].isMultipleTanks = data.isMultipleTanks;
 
 	let postMatchStep = { $match: {"members": { $elemMatch: {}}}};
 

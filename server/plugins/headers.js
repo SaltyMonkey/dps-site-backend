@@ -12,9 +12,9 @@ async function customHeadersForReq(fastify, options) {
 	const data = options.changeTo;
 
 	fastify.addHook("onSend", async (_request, reply) => {
-		data.forEach(value => {
+		for (const value of data) {
 			reply.header(value.header, value.value);
-		});
+		}
 	});
 }
 

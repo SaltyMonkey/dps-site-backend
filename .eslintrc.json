@@ -25,6 +25,9 @@
         "unicorn/filename-case": ["error", {
             "case": "camelCase"
         }],
+        "unicorn/prefer-set-has": ["error"],
+        "unicorn/no-array-for-each": ["error"],
+        //"unicorn/prevent-abbreviations": ["error"],
         "unicorn/consistent-function-scoping": "warn",
         "unicorn/explicit-length-check": "warn",
         "unicorn/error-message": "error",

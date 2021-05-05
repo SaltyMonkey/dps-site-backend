@@ -17,13 +17,13 @@ async function autoDecorator(fastify, options) {
 	const ignore = options.excludeIfNameContains;
 
 	const files = fs.readdirSync(folder);
-	files.forEach((file) => {
+	for (const file of files) {
 		const filePath = path.join(folder, file);
 		if (!ignore.includes(file[0])) {
 			// eslint-disable-next-line global-require
 			fastify.decorate((file).replace(".js", ""), require(filePath));
 		}
-	});
+	}
 
 }
 

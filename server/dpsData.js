@@ -4,11 +4,11 @@ const list = require("./dpsData/whitelist.js");
 
 const serversShapeConverter = () => {
 	let retObj = {};
-	Object.keys(regions.data).forEach(region => {
-		regions.data[region].forEach(server => {
+	for (const region of Object.keys(regions.data)) {
+		for (const server of regions.data[region]) {
 			retObj[server] = region;
-		});
-	});
+		}
+	}
 
 	return retObj;
 };
@@ -16,6 +16,7 @@ const serversShapeConverter = () => {
 module.exports = {
 	"apiConfig": {
 		"allowAnonymousUpload": false,
+		"maxAllowedTimelineUploadTimeSec": 20,
 		"maxAllowedTimeDiffSec": 180,
 		"maxDurationSec": 1800,
 		"topPlacesAmount": 100,

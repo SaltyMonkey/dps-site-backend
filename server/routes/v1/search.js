@@ -61,6 +61,7 @@ async function searchReq(fastify, options) {
 						.prop("bossId", S.integer().required())
 						.prop("fightDuration", S.string().required())
 						.prop("isP2WConsums", S.boolean())
+						.prop("isShame", S.boolean())
 						.prop("isMultipleTanks", S.boolean().required())
 						.prop("isMultipleHeals", S.boolean().required())
 						.prop("partyDps", S.string().required())
@@ -100,6 +101,7 @@ async function searchReq(fastify, options) {
 						.prop("bossId", S.integer().required())
 						.prop("fightDuration", S.string().required())
 						.prop("isP2WConsums", S.boolean())
+						.prop("isShame", S.boolean())
 						.prop("isMultipleTanks", S.boolean().required())
 						.prop("isMultipleHeals", S.boolean().required())
 						.prop("partyDps", S.string().required())
@@ -348,6 +350,24 @@ async function searchReq(fastify, options) {
 		
 		return res;
 	});
+
+	/*fastify.get("/search/timeline/:id", { prefix: options.prefix, config: options.config }, async (req) => {
+		const id = req.body.runId.trim();
+
+		const [dbError, res] = await fastify.to(fastify.uploadModel.getCompleteRun(id));
+		if (dbError) throw fastify.httpErrors.internalServerError(strings.DBERRSTR);
+		if(!res) throw fastify.httpErrors.notFound(strings.NOTFOUNDERRSTR);
+		
+		if (res) {
+			res.uploader = res.uploader.playerName;
+			
+			for (let i = 0; i < res.members.length; i++) {
+				res.members[i] = { ...res.members[i], ...res.members[i].userData };
+			}
+		}
+		
+		return res;
+	});*/
 }
 
 module.exports = searchReq;

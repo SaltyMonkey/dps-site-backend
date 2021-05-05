@@ -13,14 +13,14 @@ async function fastifyRoutes(fastify) {
 		const { method, schema, url} = routeOptions;
 		const _method = Array.isArray(method) ? method : [method];
 
-		_method.forEach(method => {
+		for (const method of _method) {
 			let rt = {
 				method,
 				url,
 				schema,
 			};
 			fastify.routes.push(rt);
-		});
+		}
 	});
 }
 
