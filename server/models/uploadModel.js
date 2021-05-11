@@ -52,7 +52,7 @@ const upload = new mongoose.Schema({
 
 upload.plugin(require("mongoose-autopopulate"));
 
-upload.statics.getLatestRuns = async function (data, amount) {
+upload.statics.getRecentRuns = async function (data, amount) {
 	//console.log(data);
 	let matchStage = {
 		$match: {
@@ -142,6 +142,90 @@ upload.statics.getLatestRuns = async function (data, amount) {
 
 	if(Object.keys(postMatchStep["$match"]["members"]["$elemMatch"]).length > 0) agregationTemplate.push(postMatchStep);
 	return await this.aggregate(agregationTemplate).sort({ "encounterUnixEpoch": -1 }).limit(amount);
+};
+
+upload.statics.getLatestRuns = async function (data, amount) {
+	//console.log(data);
+	let matchStage = {
+		$match: {
+			region: data.region
+		}
+	};
+
+	let agregationTemplate = [
+		{
+			"$project": {
+				"region": 1,
+				"runId": 1,
+				"bossId": 1,
+				"huntingZoneId": 1,
+				"encounterUnixEpoch": 1,
+				"fightDuration": 1,
+				"isP2WConsums": 1,
+				"isMultipleHeals": 1,
+				"isMultipleTanks": 1,
+				"isShame": 1,
+				"partyDps": 1,
+				"members.userData": 1,
+				"members.playerDps": 1,
+				"members.roleType": 1
+			}
+		},
+		matchStage,
+		{
+			$sort: {
+				"encounterUnixEpoch": -1
+			}
+		}, {
+			$limit: amount
+		},
+		{
+			"$unwind": { "path": "$members" }
+		},
+		{
+			"$lookup": {
+				"from": "players",
+				"localField": "members.userData",
+				"foreignField": "_id",
+				"as": "player"
+			}
+		},
+		{
+			$unwind: { path: "$player" }
+		},
+		{
+			$addFields: {
+				"members.playerClass": "$player.playerClass",
+				"members.playerName": "$player.playerName",
+				"members.playerServer": "$player.playerServer"
+			}
+		},
+		{
+			$group: {
+				_id: "$_id", 
+				members: { $push: "$members"},
+				bossId: { $first: "$bossId"},
+				debuffDetail: { $first: "$debuffDetail"},
+				encounterUnixEpoch: { $first: "$encounterUnixEpoch"},
+				huntingZoneId: { $first: "$huntingZoneId"},
+				isShame: { $first: "$isShame" },
+				isMultipleTanks: { $first: "$isMultipleTanks" },
+				isMultipleHeals: { $first: "$isMultipleHeals" },
+				isP2WConsums: { $first: "$isP2WConsums" },
+				runId: { $first: "$runId" },
+				region: { $first: "$region" },
+				fightDuration: { $first: "$fightDuration" },
+				partyDps: { $first: "$partyDps" },
+			}
+		},
+		{
+			$sort: {
+				"encounterUnixEpoch": -1
+			}
+		}
+	];
+
+	return await this.aggregate(agregationTemplate);
 };
 
 upload.statics.getCompleteRun = async function (id) {

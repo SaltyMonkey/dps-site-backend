@@ -280,7 +280,7 @@ async function searchReq(fastify, options) {
 		params.encounterUnixEpoch = timeRangeConvert(params.timeRange);
 		delete params.timeRange;
 
-		const [dbError, res] = await fastify.to(fastify.uploadModel.getLatestRuns(params, apiConfig.recentRunsAmount));
+		const [dbError, res] = await fastify.to(fastify.uploadModel.getRecentRuns(params, apiConfig.recentRunsAmount));
 		if (dbError) throw fastify.httpErrors.internalServerError(strings.DBERRSTR);
 		
 		if (res) {
