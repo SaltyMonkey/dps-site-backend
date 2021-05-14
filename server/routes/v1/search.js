@@ -3,7 +3,9 @@
 const S = require("fluent-json-schema");
 const classes = require("../../enums/classes");
 const roles = require("../../enums/classRoles");
-const time = require("../../enums/time");
+const timeTop = require("../../enums/timeTop");
+const timeSearch = require("../../enums/timeSearch");
+
 const strings = require("../../enums/strings");
 const luxon = require("luxon");
 const NodeCache = require("node-cache");
@@ -36,7 +38,7 @@ async function searchReq(fastify, options) {
 			.prop("huntingZoneId", S.integer())
 			.prop("bossId", S.integer())
 			.prop("isShame", S.boolean())
-			.prop("timeRange", S.string().enum(Object.values(time)).required())
+			.prop("timeRange", S.string().enum(Object.values(timeSearch)).required())
 			.prop("playerClass", S.string().enum(Object.values(classes)))
 			.prop("roleType", S.integer().enum(Object.values(roles)))
 			.prop("isP2WConsums", S.boolean())
@@ -129,7 +131,7 @@ async function searchReq(fastify, options) {
 			.prop("huntingZoneId", S.integer().minimum(0).required())
 			.prop("bossId", S.integer().minimum(0).required())
 			.prop("playerClass", S.string().enum(Object.values(classes)).required())
-			.prop("timeRange", S.string().enum(Object.values(time)).required())
+			.prop("timeRange", S.string().enum(Object.values(timeTop)).required())
 			.prop("roleType", S.integer().enum(Object.values(roles)))		
 		)
 			.valueOf(),
@@ -141,6 +143,7 @@ async function searchReq(fastify, options) {
 					S.object()
 						.additionalProperties(false)
 						.prop("runId", S.string().required())
+						.prop("encounterUnixEpoch", S.integer().required())
 						.prop("fightDuration", S.string().required())
 						.prop("playerClass", S.string().required())
 						.prop("playerDps", S.string().required())
@@ -237,14 +240,17 @@ async function searchReq(fastify, options) {
 		let timeSelector = {};
 		// eslint-disable-next-line default-case
 		switch(timeRange) {
-		case(time.DAY):
+		case("Day"):
 			timeSelector = { $gte: luxon.DateTime.local().startOf("day").toUTC().toSeconds() };
 			break;
-		case(time.WEEK):
+		case("Week"):
 			timeSelector = { $gte: luxon.DateTime.local().startOf("week").toUTC().toSeconds() };
 			break;
-		case(time.MONTH):
+		case("Month"):
 			timeSelector = { $gte: luxon.DateTime.local().startOf("month").toUTC().toSeconds() };
+			break;
+		case("Any"):
+			timeSelector = { $gte: 0 };
 			break;
 		}
 
@@ -323,7 +329,7 @@ async function searchReq(fastify, options) {
 
 		let params = req.body;
 
-		params.encounterUnixEpoch = timeRangeConvert(time.DAY);
+		params.encounterUnixEpoch = timeRangeConvert(timeSearch.DAY);
 		
 		const [dbError, res] = await fastify.to(fastify.uploadModel.getTopTodayRuns(params, 10));
 		if (dbError) throw fastify.httpErrors.internalServerError(strings.DBERRSTR);

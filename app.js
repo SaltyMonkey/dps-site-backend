@@ -10,12 +10,12 @@ const dpsData = require("./server/dpsData.js");
 //!TODO: Remove dat simple hack (contact Gl0 for updated shinra logic)
 const convertWhitelistInObject = (whitelist) => {
 	let objView = {};
-	whitelist.forEach(element => {
+	for (const element of whitelist) {
 		objView[element.AreaId] = {
 			bosses: element.BossIds,
 			hp: element.Hp
 		};
-	});
+	}
 
 	return objView;
 };

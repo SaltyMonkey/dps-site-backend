@@ -239,7 +239,6 @@ upload.statics.getTopTodayRuns = async function (data, limit) {
 			bossId: data.bossId,
 			huntingZoneId: data.huntingZoneId,
 			encounterUnixEpoch: data.encounterUnixEpoch,
-			isP2WConsums: false,
 			isMultipleHeals: false,
 			isMultipleTanks: false,
 			isShame: false
@@ -446,14 +445,15 @@ upload.statics.getTopRuns = async function (data, limit) {
 					},
 					"playerDps": "$members.playerDps",
 					"roleType": "$members.roleType",
-					"fightDuration": 1
+					"fightDuration": 1,
+					"encounterUnixEpoch": 1,
 				}
 			}, 
 			matchCaseSecond,
 			{
 				"$group": {
 					_id: "$playerId",
-					dps: { "$addToSet": { playerDps: "$playerDps", runId: "$runId", fightDuration: "$fightDuration"} }, 
+					dps: { "$addToSet": { playerDps: "$playerDps", runId: "$runId", fightDuration: "$fightDuration", encounterUnixEpoch: "$encounterUnixEpoch"} }, 
 					playerName: { $first: "$playerName" },
 					playerClass: { $first: "$playerClass" },
 					playerServer: { $first: "$playerServer" }
@@ -491,6 +491,11 @@ upload.statics.getTopRuns = async function (data, limit) {
 					"fightDuration": {
 						"$arrayElemAt": [
 							"$playerDps.fightDuration", 0
+						]
+					},
+					"encounterUnixEpoch": {
+						"$arrayElemAt": [
+							"$playerDps.encounterUnixEpoch", 0
 						]
 					},
 				}
