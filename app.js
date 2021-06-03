@@ -76,6 +76,7 @@ const start = async () => {
 	try {
 		await fastify.listen(conf.secureServer ? 443 : conf.serverPort, conf.serverIp);
 	} catch (error) {
+		console.log(error);
 		// eslint-disable-next-line no-magic-numbers
 		process.exit(1);
 	}

@@ -5,9 +5,9 @@
 	"httpsKeyPath": "",
 	"httpsCertPath": "",
 	"serverMaxParamLength": 100,
-	"serverTrustProxy": true,
+	"serverTrustProxy": false,
 	"dbConnectionString": "mongodb://localhost/dps",
-	"dbPoolSize": 100,
+	"dbPoolSize": 250,
 	"discordWebHook": "",
 	"cronString": "0 0 00 * * *"
 }

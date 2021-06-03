@@ -1,3 +1,5 @@
+/* eslint-disable no-case-declarations */
+
 "use strict";
 
 const S = require("fluent-json-schema");
@@ -131,6 +133,7 @@ async function searchReq(fastify, options) {
 			.prop("huntingZoneId", S.integer().minimum(0).required())
 			.prop("bossId", S.integer().minimum(0).required())
 			.prop("playerClass", S.string().enum(Object.values(classes)).required())
+			.prop("playerServer", S.string())
 			.prop("timeRange", S.string().enum(Object.values(timeTop)).required())
 			.prop("roleType", S.integer().enum(Object.values(roles)))		
 		)
@@ -251,6 +254,14 @@ async function searchReq(fastify, options) {
 			break;
 		case("Any"):
 			timeSelector = { $gte: 0 };
+			break;
+		default:
+			// assuming we are handled types in json schema
+			const splitted = timeRange.split("-");
+			const year = Number(splitted[0]);
+			const month = Number(splitted[1]);
+			const luxonObj = luxon.DateTime.local(year, month);
+			timeSelector = { $gte: luxonObj.startOf("month").toUTC().toSeconds(), $lte: luxonObj.endOf("month").toUTC().toSeconds() };
 			break;
 		}
 
