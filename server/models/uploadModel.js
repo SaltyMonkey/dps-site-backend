@@ -7,8 +7,8 @@ const upload = new mongoose.Schema({
 		type: String,
 		unique: true
 	},
-	encounterUnixEpoch: Number,
-	region: String,
+	encounterUnixEpoch: { type: Number, index: true }, 
+	region: { type: String, index: true },
 	bossId: Number,
 	huntingZoneId: Number,
 	isMultipleHeals: Boolean,
@@ -50,6 +50,7 @@ const upload = new mongoose.Schema({
 	],
 }, { useNestedStrict: true });
 
+upload.index({ region: 1, encounterUnixEpoch: -1 });
 upload.plugin(require("mongoose-autopopulate"));
 
 upload.statics.getRecentRuns = async function (data, amount) {
