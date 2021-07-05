@@ -80,7 +80,7 @@ upload.statics.getRecentRuns = async function (data, amount) {
 	if(data.playerServer) postMatchStep["$match"]["members"]["$elemMatch"].playerServer = data.playerServer;
 	if(data.roleType) postMatchStep["$match"]["members"]["$elemMatch"].roleType = data.roleType;
 
-	let agregationTemplate = [
+	let agregationTemplateMain = [
 		{
 			"$project": {
 				"region": 1,
@@ -99,50 +99,75 @@ upload.statics.getRecentRuns = async function (data, amount) {
 				"members.roleType": 1
 			}
 		},
-		matchStage,
-		{
-			"$unwind": { "path": "$members" }
-		},
-		{
-			"$lookup": {
-				"from": "players",
-				"localField": "members.userData",
-				"foreignField": "_id",
-				"as": "player"
-			}
-		},
-		{
-			$unwind: { path: "$player" }
-		},
-		{
-			$addFields: {
-				"members.playerClass": "$player.playerClass",
-				"members.playerName": "$player.playerName",
-				"members.playerServer": "$player.playerServer"
-			}
-		},
-		{
-			$group: {
-				_id: "$_id", 
-				members: { $push: "$members"},
-				bossId: { $first: "$bossId"},
-				debuffDetail: { $first: "$debuffDetail"},
-				encounterUnixEpoch: { $first: "$encounterUnixEpoch"},
-				huntingZoneId: { $first: "$huntingZoneId"},
-				isShame: { $first: "$isShame" },
-				isMultipleTanks: { $first: "$isMultipleTanks" },
-				isMultipleHeals: { $first: "$isMultipleHeals" },
-				isP2WConsums: { $first: "$isP2WConsums" },
-				runId: { $first: "$runId" },
-				region: { $first: "$region" },
-				fightDuration: { $first: "$fightDuration" },
-				partyDps: { $first: "$partyDps" },
-			}
-		}
+		matchStage
 	];
 
-	if(Object.keys(postMatchStep["$match"]["members"]["$elemMatch"]).length > 0) agregationTemplate.push(postMatchStep);
-	return await this.aggregate(agregationTemplate).sort({ "encounterUnixEpoch": -1 }).limit(amount);
+	let agregationTemplateSecondary = [{
+		"$unwind": { "path": "$members" }
+	},
+	{
+		"$lookup": {
+			"from": "players",
+			"localField": "members.userData",
+			"foreignField": "_id",
+			"as": "player"
+		}
+	},
+	{
+		$unwind: { path: "$player" }
+	},
+	{
+		$addFields: {
+			"members.playerClass": "$player.playerClass",
+			"members.playerName": "$player.playerName",
+			"members.playerServer": "$player.playerServer"
+		}
+	},
+	{
+		$group: {
+			_id: "$_id", 
+			members: { $push: "$members"},
+			bossId: { $first: "$bossId"},
+			debuffDetail: { $first: "$debuffDetail"},
+			encounterUnixEpoch: { $first: "$encounterUnixEpoch"},
+			huntingZoneId: { $first: "$huntingZoneId"},
+			isShame: { $first: "$isShame" },
+			isMultipleTanks: { $first: "$isMultipleTanks" },
+			isMultipleHeals: { $first: "$isMultipleHeals" },
+			isP2WConsums: { $first: "$isP2WConsums" },
+			runId: { $first: "$runId" },
+			region: { $first: "$region" },
+			fightDuration: { $first: "$fightDuration" },
+			partyDps: { $first: "$partyDps" },
+		}
+	}
+	];
+
+	if(Object.keys(postMatchStep["$match"]["members"]["$elemMatch"]).length === 0) {
+		agregationTemplateMain.push({
+			$sort: {
+				"encounterUnixEpoch": -1
+			}
+		});
+		agregationTemplateMain.push({
+			$limit: amount
+		});
+	}
+
+	agregationTemplateMain.push(...agregationTemplateSecondary);
+
+	if(Object.keys(postMatchStep["$match"]["members"]["$elemMatch"]).length > 0) 
+		agregationTemplateMain.push(postMatchStep);
+
+	agregationTemplateMain.push({
+		$sort: {
+			"encounterUnixEpoch": -1
+		}
+	});
+	agregationTemplateMain.push({
+		$limit: amount
+	});
+	return await this.aggregate(agregationTemplateMain).allowDiskUse(true);
 };
 
 upload.statics.getLatestRuns = async function (data, amount) {
