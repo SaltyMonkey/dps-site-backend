@@ -4,9 +4,9 @@ const S = require("fluent-json-schema");
 const humanizeDuration = require("humanize-duration");
 
 /**
- * Live route
+ * Heartbeat route
  * @param {import("fastify").FastifyInstance} fastify 
- * @param {*} options 
+ * @param {object} options 
  */
 async function statsReq(fastify, options) {
 

@@ -5,5 +5,11 @@ module.exports = Object.freeze({
 	UPLOADDUPERRSTR: "Duplicated upload",
 	EDITERRSTR: "Invalid operation",
 	NOTFOUNDERRSTR: "No data found",
-	CONTENTTPERR: "Invalid content type"
+	CONTENTTPERR: "Invalid content type",
+	UPLOADRESERRHZ: "Invalid hunting zone id/boss",
+	UPLOADRESERRHPBOUND: "Difference between registered and expected dmg out of bounds",
+	UPLOADRESERRLOWDPS: "Party dps is low",
+	UPLOADRESERRINCORERCTCOUNTER: "Members count out of bound",
+	UPLOADRESERRABNCOUNT: "Abnormals count out of bound",
+	UPLOADRESERRFAKEUPLOADER: "Fake uploader"
 });

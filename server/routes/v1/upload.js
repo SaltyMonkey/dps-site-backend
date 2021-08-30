@@ -6,7 +6,7 @@ const readable = require("readable-url");
 
 const NodeCache = require("node-cache");
 const classes = require("../../enums/classes");
-//const status = require("../../enums/statuses");
+const status = require("../../enums/statuses");
 const strings = require("../../enums/strings");
 
 /*const fs = require("fs");
@@ -142,7 +142,7 @@ async function uploadReq(fastify, options) {
 		const huntingZoneId = whitelist[payload.areaId];
 		if (!huntingZoneId || !huntingZoneId.bosses || (huntingZoneId && huntingZoneId.bosses && Array.isArray(huntingZoneId.bosses) && huntingZoneId.bosses.length > 0 && !huntingZoneId.bosses.includes(payload.bossId))) {
 			return {
-				reason: "invalid hunting zone id/boss",
+				reason: strings.UPLOADRESERRHZ,
 				status: false
 			};
 		}
@@ -153,7 +153,7 @@ async function uploadReq(fastify, options) {
 		if(totalDmg && bossHp) {
 			if(Math.abs(bossHp - totalDmg) > Math.round((bossHp/100) * 18)) {
 				return {
-					reason: "Difference between registered and expected dmg out of bounds",
+					reason: strings.UPLOADRESERRHPBOUND,
 					status: false
 				};
 			}
@@ -163,14 +163,14 @@ async function uploadReq(fastify, options) {
 		const partyDps = Number(payload.partyDps);
 		if (partyDps < apiConfig.minPartyDps) 
 			return {
-				reason: "party dps is low",
+				reason: strings.UPLOADRESERRLOWDPS,
 				status: false
 			};
 
 		//compare members amounts
 		if (payload.members.length < apiConfig.minMembersCount || payload.members.length > apiConfig.maxMembersCount) 
 			return {
-				reason: "members count out of bound",
+				reason: strings.UPLOADRESERRINCORERCTCOUNTER,
 				status: false
 			};
 
@@ -178,14 +178,14 @@ async function uploadReq(fastify, options) {
 		const uploader = Number(payload.uploader);
 		if ( uploader > payload.members.length || uploader < 0)
 			return {
-				reason: "fake uploader",
+				reason: strings.UPLOADRESERRFAKEUPLOADER,
 				status: false
 			};
 		
 		//check debuffs
 		if (!Array.isArray(payload.debuffDetail) || (Array.isArray(payload.debuffDetail) && payload.debuffDetail.length === 0)) 
 			return {
-				reason: "no debuffs spotted",
+				reason: strings.UPLOADRESERRABNCOUNT,
 				status: false
 			};
 
@@ -194,13 +194,13 @@ async function uploadReq(fastify, options) {
 		payload.members.forEach( member => {
 			if (!Array.isArray(member.buffDetail) || (Array.isArray(member.buffDetail) && member.buffDetail.length === 0)) 
 				return {
-					reason: "no buffs spotted",
+					reason: strings.UPLOADRESERRABNCOUNT,
 					status: false
 				};
 		});
 
 		return {
-			reason: "ok",
+			reason: status.OK,
 			status: true
 		};
 	};
@@ -219,6 +219,7 @@ async function uploadReq(fastify, options) {
 
 			if(arraysHasIntersect(analyze.p2wAbnormals, buffs)) specialBuffs = true;
 
+			// eslint-disable-next-line unicorn/prefer-switch
 			if (pcls === classes.PRIEST || pcls === classes.MYSTIC)
 				healersCounter += 1;
 			else if (pcls === classes.BRAWLER || pcls === classes.WARRIOR || pcls === classes.BERS) {

@@ -14,13 +14,26 @@ const serversShapeConverter = () => {
 };
 
 module.exports = {
+	"server": {
+		"serverIp": "127.0.0.1",
+		"serverPort": 3000,
+		"secureServer": false,
+		"httpsKeyPath": "",
+		"httpsCertPath": "",
+		"serverMaxParamLength": 100,
+		"serverTrustProxy": false,
+		"dbConnectionString": "mongodb://localhost/dps",
+		"dbPoolSize": 125,
+		"discordWebHook": "",
+		"cronString": "0 0 00 * * *"
+	},
 	"apiConfig": {
 		"allowAnonymousUpload": false,
 		"maxAllowedTimelineUploadTimeSec": 20,
 		"maxAllowedTimeDiffSec": 180,
 		"maxDurationSec": 1800,
 		"topPlacesAmount": 100,
-		"latestRunsAmount": 45,
+		"latestRunsAmount": 50,
 		"recentRunsAmount": 100,
 		"minMembersCount": 3,
 		"maxMembersCount": 30,

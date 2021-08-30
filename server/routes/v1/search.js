@@ -1,5 +1,4 @@
 /* eslint-disable no-case-declarations */
-
 "use strict";
 
 const S = require("fluent-json-schema");
@@ -252,6 +251,9 @@ async function searchReq(fastify, options) {
 		case("Month"):
 			timeSelector = { $gte: luxon.DateTime.local().startOf("month").toUTC().toSeconds() };
 			break;
+		case("24h"):
+			timeSelector = { $gte: luxon.DateTime.local().minus({ hours: 24 }).toUTC().toSeconds() };
+			break;
 		case("Any"):
 			timeSelector = { $gte: 0 };
 			break;
@@ -275,7 +277,8 @@ async function searchReq(fastify, options) {
 		}
 		//console.log("fresh hit");
 		let params = req.body;
-	
+		params.encounterUnixEpoch = timeRangeConvert("24h");
+
 		const [dbError, res] = await fastify.to(fastify.uploadModel.getLatestRuns(params, apiConfig.latestRunsAmount));
 		if (dbError) throw fastify.httpErrors.internalServerError(strings.DBERRSTR);
 

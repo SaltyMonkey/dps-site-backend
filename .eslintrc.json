@@ -25,14 +25,20 @@
         "unicorn/filename-case": ["error", {
             "case": "camelCase"
         }],
-        "unicorn/prefer-set-has": ["error"],
-        "unicorn/no-array-for-each": ["error"],
-        //"unicorn/prevent-abbreviations": ["error"],
+        "unicorn/no-useless-spread": "warn",
+        "unicorn/no-useless-length-check": "warn",
+        "unicorn/prefer-object-from-entries": "warn",
         "unicorn/consistent-function-scoping": "warn",
+        "unicorn/consistent-destructuring": "warn",
         "unicorn/explicit-length-check": "warn",
         "unicorn/error-message": "error",
         "unicorn/no-array-instanceof": "error",
         "unicorn/prefer-spread": "error",
+        "unicorn/no-array-for-each": "error",
+        "unicorn/no-object-as-default-parameter": "error",
+        "unicorn/no-unreadable-array-destructuring": "error",
+        "unicorn/prefer-set-has": "error",
+        "unicorn/prefer-switch": "error",
         "arrow-spacing": ["warn"],
         "init-declarations": ["warn", "always"],
         "no-duplicate-imports": [

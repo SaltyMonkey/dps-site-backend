@@ -174,7 +174,8 @@ upload.statics.getLatestRuns = async function (data, amount) {
 	//console.log(data);
 	let matchStage = {
 		$match: {
-			region: data.region
+			region: data.region,
+			encounterUnixEpoch: data.encounterUnixEpoch
 		}
 	};
 

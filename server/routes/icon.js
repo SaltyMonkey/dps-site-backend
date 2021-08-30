@@ -3,7 +3,7 @@
 /**
  * Icon path
  * @param {import("fastify").FastifyInstance} fastify 
- * @param {*} options 
+ * @param {object} options 
  */
 async function icon(fastify, options) {
 	fastify.get("/favicon.ico", { config: options.config }, async () => {

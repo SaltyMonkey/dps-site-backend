@@ -4,8 +4,7 @@
 
 const fs = require("fs");
 const path = require("path");
-const conf = require("./server/server.json");
-const dpsData = require("./server/dpsData.js");
+const config = require("./server/config.js");
 
 //!TODO: Remove dat simple hack (contact Gl0 for updated shinra logic)
 const convertWhitelistInObject = (whitelist) => {
@@ -21,8 +20,8 @@ const convertWhitelistInObject = (whitelist) => {
 };
 
 let opts = {
-	trustProxy: conf.serverTrustProxy,
-	maxParamLength: conf.serverMaxParamLength,
+	trustProxy: config.server.serverTrustProxy,
+	maxParamLength: config.server.serverMaxParamLength,
 	onConstructorPoisoning: "remove",
 	onProtoPoisoning: "remove",
 	ignoreTrailingSlash: true
@@ -38,9 +37,9 @@ else {
 	opts.logger = true;
 }
 
-if (conf.secureServer) {
-	opts.https.key = fs.readFileSync(conf.httpsKeyPath);
-	opts.https.cert = fs.readFileSync(conf.httpsCertPath);
+if (config.server.secureServer) {
+	opts.https.key = fs.readFileSync(config.server.httpsKeyPath);
+	opts.https.cert = fs.readFileSync(config.server.httpsCertPath);
 }
 
 const fastify = require("fastify")(opts);
@@ -48,11 +47,11 @@ const fastify = require("fastify")(opts);
 fastify.register(require("fastify-sensible"));
 
 fastify.register(require("./server/plugins/routeList.js"));
-fastify.register(require("./server/plugins/headers.js"), { changeTo: [ { header: "Permissions-Policy", value: "interest-cohort=()" }, { header: "X-Powered-By", value: "Hamsters" }, { header: "Access-Control-Allow-Origin", value: "*"}, { header: "Access-Control-Allow-Headers", value: "*"} ]});
-fastify.register(require("./server/plugins/mongoose.js"), { connectionString: conf.dbConnectionString, poolSize: conf.dbPoolSize });
+fastify.register(require("./server/plugins/headers.js"), { changeTo: [ { header: "Permissions-Policy", value: "interest-cohort=()" }, { header: "X-Powered-By", value: "Hamsters" }, { header: "Access-Control-Allow-Origin", value: "*"} ]});
+fastify.register(require("./server/plugins/mongoose.js"), { connectionString: config.server.dbConnectionString, poolSize: config.server.dbPoolSize });
 fastify.register(require("./server/plugins/autoDecorator.js"), { folder: path.resolve(__dirname, "./server/models"), excludeIfNameContains: ["_"] });
-fastify.register(require("./server/plugins/serverStatsReporter.js"), { botName: "DPS backend", title: "Server stats", discordWebHook: conf.discordWebHook, cronString: conf.cronString, maxDelaysForCalc: 50000 });
-fastify.register(require("./server/plugins/serverStatusChangeReporter.js"), { botName: "DPS backend", discordWebHook: conf.discordWebHook });
+fastify.register(require("./server/plugins/serverStatsReporter.js"), { botName: "DPS backend", title: "Server stats", discordWebHook: config.server.discordWebHook, cronString: config.server.cronString, maxDelaysForCalc: 50000 });
+fastify.register(require("./server/plugins/serverStatusChangeReporter.js"), { botName: "DPS backend", discordWebHook: config.server.discordWebHook });
 
 //set global and/or bloated schemas
 fastify.addSchema(require("./server/routes/v1/sharedSchemas/statusResponse"));
@@ -67,14 +66,14 @@ fastify.register(require("./server/routes/cors.js"));
 fastify.register(require("./server/routes/shinraTime.js"));
 
 //init versioned api routes
-fastify.register(require("./server/routes/v1/whitelist.js"), { prefix: "/v1", whitelist: dpsData.whitelist });
-fastify.register(require("./server/routes/v1/search.js"), { prefix: "/v1", apiConfig: dpsData.apiConfig, regionsList: dpsData.regionsList });
-fastify.register(require("./server/routes/v1/upload.js"), { prefix: "/v1", apiConfig: dpsData.apiConfig, regions: dpsData.regions, whitelist: convertWhitelistInObject(dpsData.whitelist), analyze: dpsData.uploadAnalyze });
-fastify.register(require("./server/routes/v1/control.js"), { prefix: "/v1", apiConfig: dpsData.apiConfig });
+fastify.register(require("./server/routes/v1/whitelist.js"), { prefix: "/v1", whitelist: config.whitelist });
+fastify.register(require("./server/routes/v1/search.js"), { prefix: "/v1", apiConfig: config.apiConfig, regionsList: config.regionsList });
+fastify.register(require("./server/routes/v1/upload.js"), { prefix: "/v1", apiConfig: config.apiConfig, regions: config.regions, whitelist: convertWhitelistInObject(config.whitelist), analyze: config.uploadAnalyze });
+fastify.register(require("./server/routes/v1/control.js"), { prefix: "/v1", apiConfig: config.apiConfig });
 
 const start = async () => {
 	try {
-		await fastify.listen(conf.secureServer ? 443 : conf.serverPort, conf.serverIp);
+		await fastify.listen(config.server.secureServer ? 443 : config.server.serverPort, config.server.serverIp);
 	} catch (error) {
 		console.log(error);
 		// eslint-disable-next-line no-magic-numbers

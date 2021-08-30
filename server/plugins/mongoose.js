@@ -13,10 +13,7 @@ async function mongooseConnector(fastify, options) {
 	const poolSize = options.poolSize;
 
 	let x = await mongoose.connect(str, { 
-		poolSize: poolSize,
-		useNewUrlParser: true,
-		useUnifiedTopology: true,
-		useCreateIndex: true
+		maxPoolSize: poolSize
 	});
 	
 	fastify.decorate("mongoose", x);
